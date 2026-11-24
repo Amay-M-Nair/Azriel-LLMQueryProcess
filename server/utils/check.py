@@ -105,8 +105,22 @@ def live_check(name: str) -> bool:
     return classification_ok and cited and correct
 
 
+def report_edgar() -> bool:
+    """Whether filings can be fetched. Prints the line; never prints the value."""
+    from ingestion.edgar import EdgarNotReady, user_agent
+
+    try:
+        user_agent()
+    except EdgarNotReady as exc:
+        print(f"\n   {'edgar':10} not ready  {str(exc).splitlines()[0]}")
+        return False
+    print(f"\n   {'edgar':10} READY      SEC_USER_AGENT set")
+    return True
+
+
 def main(argv: list[str]) -> int:
     ready = report_readiness()
+    report_edgar()
 
     if "--models" in argv:
         print("\nGemini models available to your key:")

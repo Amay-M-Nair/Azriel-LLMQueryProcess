@@ -75,6 +75,9 @@ Temperature starts at OpenAI's recommended 1.0 for gpt-oss. 1.0 vs 0.3 is run as
 | 2026-11-24 | 0 | fastapi / uvicorn | 0.165.0 / 0.54.0 | |
 | 2026-11-24 | 0 | streamlit, langchain-*, faiss-cpu, httpx, pytest | newest in current major | see `requirements.txt` |
 | 2026-11-24 | 0 | pypdf, pymupdf, google-genai, anthropic | held at newest 6.x / 1.x / 2.x / 1.x | new majors (7 / 2 / 3 / 2) exist; taken in the phase that touches that code |
+| 2026-11-25 | 1 | httpx | 0.28.1 | still the newest release; `httpx.MockTransport` replays recorded EDGAR responses, so no mocking library is added |
+| 2026-11-25 | 1 | pydantic | 2.14.4 newest (2.13.5 installed via fastapi) | pinned at 1.4, where the golden-set schema first needs it |
+| 2026-11-25 | 1 | ragas | 0.4.4 newest | pinned at 1.6, after checking its Gemini judge support |
 
 ---
 

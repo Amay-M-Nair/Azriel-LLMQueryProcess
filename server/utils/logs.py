@@ -26,7 +26,9 @@ FORMAT = "%(asctime)s %(levelname)-7s %(name)-24s %(message)s"
 DATE_FORMAT = "%H:%M:%S"
 
 # Variables whose values must never be printed, wherever they turn up.
-SECRET_VARIABLES = ("GROQ_API_KEY", "GOOGLE_API_KEY", "GEMINI_API_KEY", "DATABASE_URL")
+# SEC_USER_AGENT is not a key, but it carries a contact email, and logs get
+# pasted into issues.
+SECRET_VARIABLES = ("GROQ_API_KEY", "GOOGLE_API_KEY", "GEMINI_API_KEY", "DATABASE_URL", "SEC_USER_AGENT")
 
 # A key in a URL, which is how clients pass them and therefore how they end up
 # inside the exceptions those clients raise.
@@ -119,4 +121,10 @@ def setup() -> None:
 def get(name: str) -> logging.Logger:
     """A logger for one module. Use the module's own name."""
     setup()
-    return logging.getLogger(f"groundedqa.{name.rsplit('.', 1)[-1]}")
+    logger = logging.getLogger(f"groundedqa.{name.rsplit('.', 1)[-1]}")
+    # A logger's filters only see what is logged through that logger itself,
+    # not what its children pass up, so the one on "groundedqa" never saw a
+    # module's records. Each module logger carries its own.
+    if not any(isinstance(f, _Redact) for f in logger.filters):
+        logger.addFilter(_Redact())
+    return logger

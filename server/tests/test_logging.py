@@ -111,6 +111,16 @@ def test_setup_is_idempotent():
     assert len(logging.getLogger("groundedqa").handlers) == before
 
 
+def test_a_module_logger_redacts_too(monkeypatch, captured):
+    """The filter on "groundedqa" never sees what its child loggers log."""
+    monkeypatch.setenv("GROQ_API_KEY", KEY)
+    logs.get("backend.anything").warning("failed with %s in the URL", KEY)
+    logs.get("backend.anything").warning(f"and inline: {KEY}")
+    written = "\n".join(captured)
+    assert KEY not in written and written.count("<redacted>") == 2
+    assert len([f for f in logs.get("backend.anything").filters if isinstance(f, logs._Redact)]) == 1
+
+
 def test_loggers_are_namespaced():
     assert logs.get("ingestion.pipeline").name == "groundedqa.pipeline"
     assert logs.get(__name__).name.startswith("groundedqa.")

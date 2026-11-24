@@ -130,6 +130,24 @@ USE_REFUSAL_FALLBACKS = True     # retry on another model if a request is declin
 DEFAULT_COLLECTION = "default"
 
 
+# --- SEC EDGAR (ingestion/edgar.py) ----------------------------------------
+# Filings are cached here as data/filings/{ticker}/{fiscal_year}/{period}/.
+FILINGS_DIR = DATA_DIR / "filings"
+
+# The SEC's fair-access policy allows at most 10 requests per second per
+# client, and answers a client that goes faster with a 403 lockout rather
+# than a slower reply. So the limit is kept here, not discovered there.
+EDGAR_MAX_REQUESTS_PER_SECOND = 10
+EDGAR_TIMEOUT = 30.0          # seconds per request; a 10-K can be 10 MB
+EDGAR_RETRIES = 5             # tries per request on 429, 5xx or a dropped connection
+EDGAR_RETRY_BACKOFF = 1.0     # seconds, doubled per try, when the SEC suggests nothing
+EDGAR_MAX_WAIT = 60.0         # never wait longer than this between tries
+
+# The ticker -> CIK map changes when companies list, delist or rename, which
+# is rare. Re-downloaded when the cached copy is older than this.
+EDGAR_TICKER_MAP_MAX_AGE_DAYS = 7
+
+
 # --- Logging ---------------------------------------------------------------
 # Where the detail goes when the user gets a sentence. Set LOG_FILE to None to
 # keep everything on stderr, which is what you want if the terminal is right
