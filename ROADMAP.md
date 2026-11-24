@@ -31,7 +31,7 @@ snapshot. Each upgrade is measured against a baseline before it counts.
 | Phase | Done | Next |
 |---|---|---|
 | 0 Foundations | 7/7 | complete |
-| 1 Data and baseline | 0/9 | 1.1 EDGAR fetcher |
+| 1 Data and baseline | 1/9 | 1.2 Pinned snapshot |
 | 2 Database and API | 0/7 | 2.1 Neon schema |
 | 3 Structured outputs | 0/3 | 3.1 Schemas |
 | 4 Parsing and hybrid retrieval | 0/6 | 4.1 Layout-aware 10-K and 10-Q parsing |
@@ -119,7 +119,7 @@ Temperature starts at OpenAI's recommended 1.0 for gpt-oss. 1.0 vs 0.3 is run as
 ## Phase 1 — Data and baseline (doc step 1)
 *Goal: real filings (10-K and 10-Q), a golden set, and "before" numbers for everything.*
 
-- [ ] **1.1 EDGAR fetcher**
+- [x] **1.1 EDGAR fetcher**
   - `ingestion/edgar.py`: ticker → CIK → submissions JSON → the primary document of each 10-K and 10-Q.
   - Every filing carries `form` (10-K, 10-Q) and `fiscal_period` (FY, Q1, Q2, Q3) next to `fiscal_year`.
     - Year and period come from the filing's own cover data (`dei:DocumentFiscalYearFocus`, `dei:DocumentFiscalPeriodFocus`), not from dates: many fiscal years do not end in December.
