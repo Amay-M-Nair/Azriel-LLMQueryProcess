@@ -1,7 +1,7 @@
 # Grounded QA for SEC Filings
 
 > **In transition.** This repository is being rebuilt from a general document
-> Q&A app ("Azriel") into a grounded question-answering system for SEC 10-K
+> Q&A app ("Azriel") into a grounded question-answering system for SEC 10-K and 10-Q
 > filings: FastAPI + React on Render, Postgres + pgvector on Neon, Groq
 > gpt-oss for answers. The plan, its progress and its measured results live in
 > **[ROADMAP.md](ROADMAP.md)**. The sections below describe the pipeline as it

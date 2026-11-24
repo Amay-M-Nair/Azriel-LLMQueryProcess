@@ -1,8 +1,9 @@
 # Grounded QA for SEC Filings — Roadmap
 
-A question-answering system for SEC 10-K filings. It returns cited answers that are checked
-against the filing, or an explicit "the filing does not say". Each upgrade is measured
-against a baseline before it counts.
+A question-answering system for SEC 10-K (annual) and 10-Q (quarterly) filings. It returns
+cited answers that are checked against the filing, or an explicit "the filing does not say".
+The live index picks up new filings as they are filed; the evaluation runs on a pinned
+snapshot. Each upgrade is measured against a baseline before it counts.
 
 **Stack:**
 - **Frontend and API:** React + FastAPI on Render.
@@ -17,7 +18,10 @@ against a baseline before it counts.
    - Every `pytest` run ticks or unticks each subphase from its `@pytest.mark.roadmap("x.y")` tests (`server/tools/roadmap.py`, hooked in `server/conftest.py`). A skipped check counts as not done.
    - `server/tests/test_roadmap.py` fails when Results are older than the last pipeline change.
    - `python -m tools.roadmap --check` (from `server/`) reports whether this file is current.
-2. **Pinned filings.** Filings come from SEC EDGAR; the evaluation always runs on the pinned snapshot in `evaluation/snapshot.json`.
+2. **Live filings, pinned evaluation.** Filings come from SEC EDGAR.
+   - The live index is kept current: a refresh job (2.7) adds each new 10-K and 10-Q from the tracked companies.
+   - The evaluation always runs on the pinned snapshot in `evaluation/snapshot.json`, so a score changes only when the code does.
+   - The snapshot is refreshed on purpose, as a new version (for example when a new fiscal year closes), and the golden set is extended with it. Every Results row names the snapshot it ran on.
 3. **Version checks.** Every phase opens with a version check, logged under *Versions checked*.
 
 ---
@@ -28,9 +32,9 @@ against a baseline before it counts.
 |---|---|---|
 | 0 Foundations | 7/7 | complete |
 | 1 Data and baseline | 0/9 | 1.1 EDGAR fetcher |
-| 2 Database and API | 0/6 | 2.1 Neon schema |
+| 2 Database and API | 0/7 | 2.1 Neon schema |
 | 3 Structured outputs | 0/3 | 3.1 Schemas |
-| 4 Parsing and hybrid retrieval | 0/6 | 4.1 Layout-aware 10-K parsing |
+| 4 Parsing and hybrid retrieval | 0/6 | 4.1 Layout-aware 10-K and 10-Q parsing |
 | 5 Reranking, expansion, refusal | 0/5 | 5.1 Cross-encoder reranker |
 | 6 Routing and cost | 0/3 | 6.1 Decompose route |
 | 7 Verification | 0/5 | 7.1 Claim decomposition |
@@ -110,25 +114,35 @@ Temperature starts at OpenAI's recommended 1.0 for gpt-oss. 1.0 vs 0.3 is run as
   - *Done when:* the measurement and the decision are recorded here.
 
 ## Phase 1 — Data and baseline (doc step 1)
-*Goal: real filings, a golden set, and "before" numbers for everything.*
+*Goal: real filings (10-K and 10-Q), a golden set, and "before" numbers for everything.*
 
 - [ ] **1.1 EDGAR fetcher**
-  - `ingestion/edgar.py`: ticker → CIK → submissions JSON → 10-K primary document.
+  - `ingestion/edgar.py`: ticker → CIK → submissions JSON → the primary document of each 10-K and 10-Q.
+  - Every filing carries `form` (10-K, 10-Q) and `fiscal_period` (FY, Q1, Q2, Q3) next to `fiscal_year`.
+    - Year and period come from the filing's own cover data (`dei:DocumentFiscalYearFocus`, `dei:DocumentFiscalPeriodFocus`), not from dates: many fiscal years do not end in December.
+    - Amendments (10-K/A, 10-Q/A) are listed but not fetched for now.
+  - A `latest` mode lists the filings newer than what is cached, by accession number. The refresh job (2.7) builds on it.
   - Rules:
     - User-Agent from `SEC_USER_AGENT`.
     - At most 10 requests per second, with backoff.
-    - Cache to `data/filings/{ticker}/{fy}/`.
-  - *Done when:* recorded-response tests pass and real filings download.
+    - Cache to `data/filings/{ticker}/{fy}/{period}/`.
+  - *Done when:* recorded-response tests pass for both forms and for `latest`, and real filings download.
 - [ ] **1.2 Pinned snapshot**
   - `evaluation/snapshot.json`: 5–8 companies × 3 fiscal years, by accession number.
+  - Each fiscal year holds its 10-K and its three 10-Qs: 12 filings per company. There is no Q4 10-Q; the fourth quarter lives in the 10-K.
+  - The snapshot has a `version`, recorded in every evaluation result.
   - *Done when:* `--snapshot` reproduces identical files (hash check).
 - [ ] **1.3 Baseline ingestion**
   - A minimal `.htm` loader, run through the unchanged chunker, embedder and FAISS pipeline.
+  - `form`, `fiscal_year` and `fiscal_period` ride along as chunk metadata.
   - *Done when:* the snapshot is indexed.
 - [ ] **1.4 Golden set**
-  - 60–100 hand-verified questions with a Pydantic schema, covering table lookups, text lookups, follow-ups, multi-hop/cross-year, definitions, summaries and unanswerable questions.
+  - 60–100 hand-verified questions with a Pydantic schema, covering table lookups, text lookups, follow-ups, multi-hop/cross-period, definitions, summaries and unanswerable questions.
+  - Both forms are covered: at least 20 cases are answered from 10-Qs.
+    - Cross-period means year over year and quarter over quarter.
+    - Some Q4 questions must be derived. For flow figures (revenue, income, cash flow), Q4 is the 10-K's annual figure minus the Q3 10-Q's nine-month figure. Balance-sheet figures are a point in time, so Q4 is read straight from the 10-K.
   - Relevance is labelled by **text span** (accession + char offsets), so labels survive re-chunking and the database move.
-  - *Done when:* every case validates, with at least 8 of each type.
+  - *Done when:* every case validates, with at least 8 of each type and at least 20 on 10-Qs.
 - [ ] **1.5 Exact metrics, from scratch**
   - NumPy recall@k, MRR, nDCG@10, bootstrap CI, Cohen's kappa.
   - *Done when:* unit tests against hand-worked examples pass.
@@ -150,17 +164,23 @@ Temperature starts at OpenAI's recommended 1.0 for gpt-oss. 1.0 vs 0.3 is run as
 *Goal: the pipeline served by FastAPI from Neon, with numbers identical to the FAISS baseline.*
 
 - [ ] **2.1 Neon schema**
-  - Tables: `filings`, `chunks` (`vector(384)` + company, cik, fiscal_year, section, kind, span), `tables` (JSONB), `eval_runs`.
+  - Tables:
+    - `filings` (accession, cik, form, fiscal_year, fiscal_period, period end, filed date).
+    - `chunks` (`vector(384)` + company, cik, form, fiscal_year, fiscal_period, section, kind, span).
+    - `tables` (JSONB) and `eval_runs`.
+  - `form` is free text rather than an enum, so a new form type (8-K, later) needs no migration.
   - psycopg 3 + pgvector, with a migration runner.
   - *Done when:* migrations apply to a fresh Neon branch.
 - [ ] **2.2 pgvector store**
-  - Same `search` interface as `VectorStore`, plus company/year/section filters. Exact scan first.
+  - Same `search` interface as `VectorStore`, plus company/form/year/period/section filters. Exact scan first.
   - *Done when:* store tests pass against a test database.
 - [ ] **2.3 BM25 from Postgres**
   - Chunks loaded into `vectorstore/keyword.BM25` at startup; `pg_search` checked as an alternative.
-  - *Done when:* BM25 scores match the FAISS-era ones.
+  - With 10-Qs the index is roughly four times the filings of a 10-K-only design, so BM25's memory is measured at full size against the 0.7 headroom (~75 MB). If it does not fit, the keyword search moves into Postgres.
+  - *Done when:* BM25 scores match the FAISS-era ones and its memory is recorded.
 - [ ] **2.4 Ingest CLI**
   - `python -m ingestion.ingest --snapshot`: fetch → parse → chunk → embed → upsert, deduplicated by hash.
+  - `--ticker X --latest` ingests one company's newest filings the same way.
   - *Done when:* a rerun inserts nothing.
 - [ ] **2.5 FastAPI service**
   - Endpoints: `POST /ask` (NDJSON stream), `GET /filings`, `GET /health`.
@@ -169,6 +189,11 @@ Temperature starts at OpenAI's recommended 1.0 for gpt-oss. 1.0 vs 0.3 is run as
 - [ ] **2.6 Parity check**
   - pgvector + BM25 vs FAISS on the golden set; FAISS is retired afterwards.
   - *Done when:* the parity row equals the baseline.
+- [ ] **2.7 Filing refresh**
+  - `python -m ingestion.refresh`: for each tracked company, the 1.1 `latest` mode finds 10-K and 10-Q accession numbers not yet in `filings`, and 2.4 ingests them.
+  - It writes to the live index only. The pinned snapshot and the evaluation are never touched.
+  - Each run logs what it found and added; a failure on one company does not stop the others.
+  - *Done when:* a recorded-response test with one new filing inserts exactly that filing, and a second run inserts nothing.
 
 ## Phase 3 — Structured outputs (doc step 2)
 *Goal: every model reply is validated data.*
@@ -184,14 +209,16 @@ Temperature starts at OpenAI's recommended 1.0 for gpt-oss. 1.0 vs 0.3 is run as
 ## Phase 4 — Parsing and hybrid retrieval (doc step 3)
 *Goal: retrieval that understands 10-K structure.*
 
-- [ ] **4.1 Layout-aware 10-K parsing**
-  - BeautifulSoup + lxml. Split by Item (1, 1A, 7, 7A, 8).
-  - *Done when:* the section of every golden span is detected correctly.
+- [ ] **4.1 Layout-aware 10-K and 10-Q parsing**
+  - BeautifulSoup + lxml.
+  - 10-K: split by Item (1, 1A, 7, 7A, 8).
+  - 10-Q: split by Part and Item (Part I Items 1–4, Part II Items 1–6, including 1A). The two forms number their Items differently, so sections are stored as names (for example "MD&A"), not bare Item numbers.
+  - *Done when:* the section of every golden span is detected correctly, on both forms.
 - [ ] **4.2 Table extraction**
   - Tables become `kind=table` chunks and structured JSONB.
   - *Done when:* the golden table figures are found in the extracted tables.
 - [ ] **4.3 Metadata filters**
-  - Company/year extracted from the question; the UI filter overrides it.
+  - Company, year and quarter extracted from the question ("Q3 2025", "last quarter"); "latest" resolves to the newest filing. The UI filter overrides it.
   - *Done when:* the filter ablation row is filled.
 - [ ] **4.4 Chunking comparison**
   - Recursive vs section-aware vs parent-child.
@@ -226,7 +253,8 @@ Temperature starts at OpenAI's recommended 1.0 for gpt-oss. 1.0 vs 0.3 is run as
 *Goal: a measured cost vs quality trade-off.*
 
 - [ ] **6.1 Decompose route**
-  - Sub-questions with per-year filters, under a step limit; `calculator.py` for growth and margins.
+  - Sub-questions with per-period filters, under a step limit.
+  - `calculator.py` for growth, margins, and Q4 flow figures (annual minus nine months).
   - *Done when:* the multi-hop questions pass.
 - [ ] **6.2 Model choice**
   - 20b vs 120b per route, each with its own effort.
@@ -245,6 +273,7 @@ Temperature starts at OpenAI's recommended 1.0 for gpt-oss. 1.0 vs 0.3 is run as
   - In production, gpt-oss-20b on Groq checks each claim against its cited chunks (decided in 0.7: local NLI does not fit). The fp32 NLI cross-encoder still runs offline in the evaluation, as a second opinion to compare against.
 - [ ] **7.3 Numeric verifier**
   - Units, %, negatives in parentheses and fiscal periods normalised, then matched against the extracted tables.
+  - A 10-Q table shows three-month and nine-month (year-to-date) columns side by side; a figure from the wrong column counts as unsupported.
 - [ ] **7.4 Verdict**
   - A `verdict` event: supported / partly unsupported / declined.
   - *Done when:* the unsupported-claim rate is reported before and after.
@@ -268,7 +297,7 @@ Temperature starts at OpenAI's recommended 1.0 for gpt-oss. 1.0 vs 0.3 is run as
 *Goal: a live, public demo.*
 
 - [ ] **9.1 React app**
-  - Vite + React + TypeScript; an NDJSON stream reader; a company/year filter.
+  - Vite + React + TypeScript; an NDJSON stream reader; a company/year/quarter filter.
 - [ ] **9.2 Answer view**
   - Expandable citations (passage or table) and the verdict badge.
 - [ ] **9.3 Trace panel and sample questions**
@@ -277,11 +306,18 @@ Temperature starts at OpenAI's recommended 1.0 for gpt-oss. 1.0 vs 0.3 is run as
 - [ ] **9.4 Render deployment**
   - `render.yaml` with a static site and a FastAPI web service.
   - Env vars: Neon `DATABASE_URL`, `GROQ_API_KEY`, `SEC_USER_AGENT`, allowed origin.
+  - The 2.7 refresh runs on a schedule: a Render cron job, or a GitHub Actions scheduled workflow if the free tier rules that out (checked at this step). Daily is enough: filings arrive a few times a year per company.
 - [ ] **9.5 Public hardening**
   - Per-IP and daily LLM caps; an optional bring-your-own-key header that is never logged.
   - *Done when:* the live URL answers all 7 doc question types within its memory limit.
 - [ ] **9.6 Write-up**
   - README with generated numbers, 5–10 failure cases, and resume bullets limited to what is built.
+
+## Later (not scheduled)
+- **8-K event reports.** Left out of Phases 1–9 on purpose (decided 2026-11-25):
+  - Each 8-K reports a different kind of event (earnings, an executive change, a contract), and the substance is usually in an exhibit such as the EX-99.1 press release, which needs its own fetch and parse path.
+  - Companies file many small 8-Ks, which adds retrieval noise and makes refusal and claim checking harder.
+  - Taken up once verification (Phase 7) works. `form` is already free text (2.1), so the schema is ready for it.
 
 ---
 

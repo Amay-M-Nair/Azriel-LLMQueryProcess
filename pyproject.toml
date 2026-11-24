@@ -1,7 +1,7 @@
 [project]
 name = "grounded-qa-sec"
 version = "0.1.0"
-description = "Grounded question answering over SEC 10-K filings: cited, verified, or declined."
+description = "Grounded question answering over SEC 10-K and 10-Q filings: cited, verified, or declined."
 requires-python = ">=3.11"
 
 [tool.pytest.ini_options]
