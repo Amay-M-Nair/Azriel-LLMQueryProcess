@@ -1,11 +1,21 @@
-# Azriel
+# Grounded QA for SEC Filings
 
-Ask questions about your own PDFs and notes. Answers come only from the files
-you upload, and every claim is cited back to the file and page it came from.
+> **In transition.** This repository is being rebuilt from a general document
+> Q&A app ("Azriel") into a grounded question-answering system for SEC 10-K
+> filings: FastAPI + React on Render, Postgres + pgvector on Neon, Groq
+> gpt-oss for answers. The plan, its progress and its measured results live in
+> **[ROADMAP.md](ROADMAP.md)**. The sections below describe the pipeline as it
+> stands today, which is the baseline every phase is measured against.
 
-This is a **RAG** system (retrieval-augmented generation): the standard way to
-make a language model answer questions about private documents it was never
-trained on.
+All Python lives under `server/`. Run Python commands from there:
+
+```bash
+cd server
+../.venv/Scripts/python.exe -m utils.check
+../.venv/Scripts/streamlit.exe run app.py
+```
+
+Run the tests from the repository root with `.venv/Scripts/python.exe -m pytest`.
 
 ## How it works
 
@@ -72,7 +82,7 @@ number of API calls spent.
 labelled questions across the five intents, and a scorer. Run it with:
 
 ```bash
-.venv/Scripts/python.exe -m evaluation.run_eval --answers
+../.venv/Scripts/python.exe -m evaluation.run_eval --answers   # from server/
 ```
 
 Against Gemini, over 15 chunks:
@@ -126,13 +136,14 @@ marked answer is more use than a dead end, and the boundary stays visible.
    Check it worked:
 
    ```bash
-   .venv/Scripts/python.exe -m utils.check
+   cd server
+   ../.venv/Scripts/python.exe -m utils.check
    ```
 
 3. Run it:
 
    ```bash
-   .venv/Scripts/streamlit.exe run app.py
+   ../.venv/Scripts/streamlit.exe run app.py
    ```
 
    Your browser opens at `http://localhost:8501`. Upload files in the sidebar,
@@ -167,10 +178,8 @@ Run the tests with:
 Documents are kept in **collections**. A collection is a namespace with its
 own index, and no collection can retrieve another's documents.
 
-On one machine that is invisible: everything goes in `default`, because every
-visitor is you. On a URL it is the whole ballgame - the page gives each
-browser session a collection of its own, so one visitor's question can never
-retrieve and cite another visitor's files. See *Deploying it* below.
+Everything goes in `default`. SEC filings are public, so the deployed app
+serves one shared index of filings rather than a collection per visitor.
 
 Collection names become directory names, so they are checked rather than
 trusted - letters, digits, dashes and underscores only. A name like
@@ -196,7 +205,7 @@ so any single piece can be replaced without disturbing the rest.
 | | `calculator.py` | Arithmetic, worked out locally |
 | | `rag.py` | Builds the prompt, hands it to the chosen provider |
 | | `llm.py` | Provider registry — picks one by name |
-| | `providers/` | One adapter per answer model (Gemini, Ollama, Claude) |
+| | `providers/` | One adapter per answer model (Groq, Gemini, Ollama) |
 | **ingestion** | `document_loader.py` | File → pages of text, OCR included |
 | | `chunker.py` | Pages → overlapping chunks |
 | | `embedder.py` | Text → vectors |
@@ -225,7 +234,6 @@ switching providers changes nothing else in the system.
 |---|---|---|---|
 | `gemini` | Free tier | `GOOGLE_API_KEY` | **~20 requests/day per model**; documents go to Google |
 | `ollama` | Free forever | Ollama running locally | Offline and private, but a 3B model follows the citation rules less reliably |
-| `anthropic` | ~$0.008-0.04/question | `ANTHROPIC_API_KEY` | Costs money; best instruction-following |
 
 Set it in `utils/config.py`, or pick it from the sidebar while the app is
 running. To add a fourth, write a `Provider` subclass in `backend/providers/`
@@ -353,7 +361,7 @@ than diagnostic, and because several failures are swallowed deliberately - a
 rewrite that fails falls back to the original question, an OCR page that
 fails is skipped - and would otherwise leave no trace at all.
 
-Logs go to stderr and to `data/azriel.log`. Set `LOG_FILE = None` in
+Logs go to stderr and to `data/groundedqa.log`. Set `LOG_FILE = None` in
 `utils/config.py` to keep them on stderr alone.
 
 **Two things never reach them: API keys, and the contents of your documents.**
@@ -383,75 +391,5 @@ covered too.
   question can fail: if its words appear nowhere in the text, neither vector
   nor keyword search can find the right chunk. Storing per-document summaries
   and searching those too would fix it.
-- **One index, shared by everyone.** Fine on your own machine, disqualifying
-  on a public URL - see below.
-
-## Deploying it
-
-### The one thing to get right
-
-On your own machine every visitor is you, so one shared index is correct and
-your documents are still there tomorrow. On a URL it is a document leak:
-everyone reads everyone else's files, and the answers cite them.
-
-So the page has two modes, and hosting it means picking the second:
-
-```
-AZRIEL_COLLECTIONS=visitor   a fresh collection per browser session
-AZRIEL_PUBLIC=1              refuse to start if the above is not set
-```
-
-`AZRIEL_PUBLIC` exists because the failure is silent. A deployment left on
-shared looks perfectly normal until two people use it, and nothing on the
-page says otherwise - so it stops rather than serves. Both are lines of
-the secrets you paste in when deploying.
-
-Visitor collections are forgotten when the tab closes. That is the trade:
-uploading again after a refresh, in exchange for documents that are nobody
-else's business.
-
-### Streamlit Community Cloud
-
-1. Push this repository to GitHub.
-2. share.streamlit.io -> **Create app** -> pick the repo, branch `main`,
-   file `app.py`.
-3. Open **Advanced settings** before deploying. Set the Python version to
-   **3.11**, and paste into **Secrets**:
-
-```toml
-GOOGLE_API_KEY = "your-key"
-AZRIEL_COLLECTIONS = "visitor"
-AZRIEL_PUBLIC = "1"
-```
-
-Those three are read from the environment by `utils/config.py`, and
-Community Cloud sets every root-level secret as an environment variable, so
-nothing in the code has to know where it came from. Keep them quoted - the
-public check is a string comparison against `"1"`.
-
-The first build takes several minutes. The app then lives at
-`https://<something>.streamlit.app`, and **sleeps after 12 hours** without
-traffic; the next visitor wakes it.
-
-Two files exist only for this host. `packages.txt` installs `libgl1` and
-`libglib2.0-0`, which opencv needs and which OCR pulls in - without them a
-scanned PDF is skipped instead of read. And `requirements.txt` asks for
-torch from PyTorch's CPU index, because the wheel PyPI serves on Linux
-bundles 2.5 GB of CUDA libraries for a GPU no free host has. That one
-matters everywhere, not just here: it is most of the install.
-
-The ceiling is 2.7 GB of memory and 2 CPU cores, shared. Loading the
-embedding model and answering a question fits; what will not fit is a very
-large index held in memory alongside it. If the app shows "over its resource
-limits", that is what happened.
-
-### What is still true after deploying
-
-- **The filesystem is ephemeral.** For visitor collections that is the
-  intent: documents go when the tab does. Nothing an app writes survives a
-  reboot, so the index is always rebuilt from what visitors upload.
-- **One free-tier key serves every visitor.** The sidebar lets someone bring
-  their own, which is the only thing that scales past twenty questions a day.
-- **The model reads figures but does not understand them** - see the limits
-  below, because that one produces confident wrong answers rather than errors.
-
+- **One index, shared by everyone.** Right for public filings; it would be
+  wrong for private uploads on a public URL.

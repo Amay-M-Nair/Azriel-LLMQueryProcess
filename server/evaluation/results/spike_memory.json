@@ -1,0 +1,80 @@
+{
+  "subphase": "0.7",
+  "date": "2026-11-24",
+  "machine": "Windows 10, Python 3.11.9",
+  "note": "Measured on Windows (peak working set). Linux RSS for the same process is usually within ~10-20%; confirm on Render's metrics after 9.4.",
+  "model_sizes_mb": {
+    "embedder": 90,
+    "embedder-int8": 23,
+    "nli": 739,
+    "nli-int8": 244,
+    "reranker": 91,
+    "reranker-int8": 23
+  },
+  "int8_agreement": {
+    "embedder_min_cosine_fp32_vs_int8": 0.9612778425216675,
+    "embedder_same_top1": 1.0,
+    "reranker_same_top1": 1.0,
+    "nli_same_label": 0.0,
+    "nli_fp32_labels": [
+      "entailment",
+      "entailment",
+      "entailment",
+      "entailment",
+      "contradiction",
+      "contradiction",
+      "contradiction",
+      "contradiction"
+    ]
+  },
+  "measurements": [
+    {
+      "configuration": "service only (FastAPI + onnxruntime, no models)",
+      "rss_mb": 77.5,
+      "peak_mb": 77.5,
+      "seconds": 1.0
+    },
+    {
+      "configuration": "embedder (fp32)",
+      "rss_mb": 186.9,
+      "peak_mb": 228.3,
+      "seconds": 1.2
+    },
+    {
+      "configuration": "embedder + reranker (fp32)",
+      "rss_mb": 513.1,
+      "peak_mb": 513.1,
+      "seconds": 2.2
+    },
+    {
+      "configuration": "embedder + reranker + NLI (fp32)",
+      "rss_mb": 1498.0,
+      "peak_mb": 1527.7,
+      "seconds": 6.7
+    },
+    {
+      "configuration": "embedder + reranker (int8)",
+      "rss_mb": 368.3,
+      "peak_mb": 368.3,
+      "seconds": 1.8
+    },
+    {
+      "configuration": "embedder (fp32) + reranker (int8)",
+      "rss_mb": 435.0,
+      "peak_mb": 435.0,
+      "seconds": 1.8
+    },
+    {
+      "configuration": "embedder + reranker + NLI (int8)",
+      "rss_mb": 803.9,
+      "peak_mb": 803.9,
+      "seconds": 4.8
+    },
+    {
+      "configuration": "PyTorch path: sentence-transformers embedder + reranker",
+      "rss_mb": 792.2,
+      "peak_mb": 799.3,
+      "seconds": 19.6
+    }
+  ]
+}

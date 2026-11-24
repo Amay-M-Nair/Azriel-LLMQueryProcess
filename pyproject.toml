@@ -1,0 +1,25 @@
+[project]
+name = "grounded-qa-sec"
+version = "0.1.0"
+description = "Grounded question answering over SEC 10-K filings: cited, verified, or declined."
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+# The Python packages live under server/. Run everything from the repo root.
+pythonpath = ["server"]
+testpaths = ["server/tests"]
+markers = [
+    "roadmap(subphase): this test is the 'done when' check for a ROADMAP.md subphase, e.g. roadmap('0.4')",
+]
+
+[tool.ruff]
+# Lint only. The code is hand-aligned on purpose (lined-up config comments,
+# deliberate spacing), so no auto-formatter is run over it.
+src = ["server"]
+target-version = "py311"
+line-length = 110
+
+[tool.ruff.lint]
+# Real defects, not style: pyflakes (unused/undefined names, redefinitions)
+# and syntax errors.
+select = ["F", "E9"]
