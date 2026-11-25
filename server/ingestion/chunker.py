@@ -36,6 +36,16 @@ class Chunk:
     chunk_id: str = ""
     start_word: int = 0
     end_word: int = 0
+    # Where the chunk sits in its page's text, as character offsets:
+    # page_text[start_char:end_char] == text. -1 if it could not be located.
+    start_char: int = -1
+    end_char: int = -1
+    # Filing metadata (ROADMAP 1.3). Empty for uploaded documents.
+    ticker: str = ""
+    accession: str = ""
+    form: str = ""           # "10-K" | "10-Q"
+    fiscal_year: int = 0
+    fiscal_period: str = ""  # "FY" | "Q1" | "Q2" | "Q3"
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -119,6 +129,8 @@ def chunk_pages(
                     chunk_id=f"{slug}_page{page_number}_chunk{len(chunks)}",
                     start_word=start_word,
                     end_word=start_word + len(piece.split()),
+                    start_char=position,
+                    end_char=position + len(piece) if position != -1 else -1,
                 )
             )
 

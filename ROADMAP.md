@@ -139,8 +139,12 @@ Temperature starts at OpenAI's recommended 1.0 for gpt-oss. 1.0 vs 0.3 is run as
   - `python -m evaluation.snapshot --build` picks the filings; `python -m evaluation.snapshot --fresh` re-downloads them into an empty folder and checks every hash.
   - *Done when:* `--fresh` reproduces identical files (hash check).
 - [ ] **1.3 Baseline ingestion**
-  - A minimal `.htm` loader, run through the unchanged chunker, embedder and FAISS pipeline.
-  - `form`, `fiscal_year` and `fiscal_period` ride along as chunk metadata.
+  - A minimal `.htm` loader (`document_loader.html_text`), run through the unchanged chunker, embedder and FAISS pipeline.
+    - It drops scripts, styles and hidden content, including inline XBRL's hidden facts.
+    - Each block is a line, and each table row is one line with its cells joined by ` | `.
+    - Nothing else is attempted: no Items, no table structure. That is 4.1 and 4.2.
+  - `ticker`, `accession`, `form`, `fiscal_year` and `fiscal_period` ride along as chunk metadata. So do character offsets into the filing's text, which the 1.4 span labels are matched against.
+  - `python -m ingestion.filings` indexes into `data/snapshot_index/v{version}/`. It saves after each company and skips filings already indexed, so an interrupted run resumes.
   - *Done when:* the snapshot is indexed.
 - [ ] **1.4 Golden set**
   - 60–100 hand-verified questions with a Pydantic schema, covering table lookups, text lookups, follow-ups, multi-hop/cross-period, definitions, summaries and unanswerable questions.

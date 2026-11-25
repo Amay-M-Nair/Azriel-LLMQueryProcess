@@ -133,6 +133,9 @@ DEFAULT_COLLECTION = "default"
 # --- SEC EDGAR (ingestion/edgar.py) ----------------------------------------
 # Filings are cached here as data/filings/{ticker}/{fiscal_year}/{period}/.
 FILINGS_DIR = DATA_DIR / "filings"
+# The evaluation's FAISS index of the pinned snapshot, one folder per
+# snapshot version: data/snapshot_index/v1/ (ROADMAP 1.3).
+SNAPSHOT_INDEX_DIR = DATA_DIR / "snapshot_index"
 
 # The SEC's fair-access policy allows at most 10 requests per second per
 # client, and answers a client that goes faster with a 403 lockout rather
