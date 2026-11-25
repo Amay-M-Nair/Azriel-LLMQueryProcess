@@ -31,7 +31,7 @@ snapshot. Each upgrade is measured against a baseline before it counts.
 | Phase | Done | Next |
 |---|---|---|
 | 0 Foundations | 7/7 | complete |
-| 1 Data and baseline | 2/9 | 1.3 Baseline ingestion |
+| 1 Data and baseline | 3/9 | 1.4 Golden set |
 | 2 Database and API | 0/7 | 2.1 Neon schema |
 | 3 Structured outputs | 0/3 | 3.1 Schemas |
 | 4 Parsing and hybrid retrieval | 0/6 | 4.1 Layout-aware 10-K and 10-Q parsing |
@@ -138,7 +138,7 @@ Temperature starts at OpenAI's recommended 1.0 for gpt-oss. 1.0 vs 0.3 is run as
   - The snapshot has a `version`, recorded in every evaluation result. A rebuild bumps it only if the pinned filings changed.
   - `python -m evaluation.snapshot --build` picks the filings; `python -m evaluation.snapshot --fresh` re-downloads them into an empty folder and checks every hash.
   - *Done when:* `--fresh` reproduces identical files (hash check).
-- [ ] **1.3 Baseline ingestion**
+- [x] **1.3 Baseline ingestion**
   - A minimal `.htm` loader (`document_loader.html_text`), run through the unchanged chunker, embedder and FAISS pipeline.
     - It drops scripts, styles and hidden content, including inline XBRL's hidden facts.
     - Each block is a line, and each table row is one line with its cells joined by ` | `.
