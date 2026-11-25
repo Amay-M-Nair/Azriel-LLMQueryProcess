@@ -31,7 +31,7 @@ snapshot. Each upgrade is measured against a baseline before it counts.
 | Phase | Done | Next |
 |---|---|---|
 | 0 Foundations | 7/7 | complete |
-| 1 Data and baseline | 1/9 | 1.2 Pinned snapshot |
+| 1 Data and baseline | 2/9 | 1.3 Baseline ingestion |
 | 2 Database and API | 0/7 | 2.1 Neon schema |
 | 3 Structured outputs | 0/3 | 3.1 Schemas |
 | 4 Parsing and hybrid retrieval | 0/6 | 4.1 Layout-aware 10-K and 10-Q parsing |
@@ -130,11 +130,14 @@ Temperature starts at OpenAI's recommended 1.0 for gpt-oss. 1.0 vs 0.3 is run as
     - At most 10 requests per second, with backoff.
     - Cache to `data/filings/{ticker}/{fy}/{period}/`.
   - *Done when:* recorded-response tests pass for both forms and for `latest`, and real filings download.
-- [ ] **1.2 Pinned snapshot**
-  - `evaluation/snapshot.json`: 5–8 companies × 3 fiscal years, by accession number.
+- [x] **1.2 Pinned snapshot**
+  - `evaluation/snapshot.json`: 5–8 companies × 3 fiscal years, by accession number and SHA-256.
+  - Companies: AAPL, MSFT, JPM, JNJ, WMT, CVX. Six industries, and fiscal years ending in September, June, December, January and on 52/53-week calendars.
   - Each fiscal year holds its 10-K and its three 10-Qs: 12 filings per company. There is no Q4 10-Q; the fourth quarter lives in the 10-K.
-  - The snapshot has a `version`, recorded in every evaluation result.
-  - *Done when:* `--snapshot` reproduces identical files (hash check).
+  - Only complete fiscal years are pinned: a year counts once its 10-K is filed, so a year still in progress is left out rather than half-included.
+  - The snapshot has a `version`, recorded in every evaluation result. A rebuild bumps it only if the pinned filings changed.
+  - `python -m evaluation.snapshot --build` picks the filings; `python -m evaluation.snapshot --fresh` re-downloads them into an empty folder and checks every hash.
+  - *Done when:* `--fresh` reproduces identical files (hash check).
 - [ ] **1.3 Baseline ingestion**
   - A minimal `.htm` loader, run through the unchanged chunker, embedder and FAISS pipeline.
   - `form`, `fiscal_year` and `fiscal_period` ride along as chunk metadata.
@@ -353,6 +356,11 @@ What it showed:
 - **If Render shows less headroom**, there are two fallbacks:
   - Embed both filings and queries with the int8 embedder (368 MB). This is consistent, but the 4.6 ablation must show it costs no recall.
   - Move to a 2 GB instance.
+
+### 1.1–1.2 — Filings from EDGAR (2026-11-25)
+- **Every one of the 72 pinned filings declares its fiscal year and period on its cover**, so none had to be placed by dates. The covers agree with how each company names its years. Walmart's year ending 31 January 2026 is fiscal 2026. Johnson & Johnson's 52/53-week years end on 31 December 2023, 29 December 2024 and 28 December 2025.
+- **A ticker can move to a new company record.** In 2026 ExxonMobil reorganised under a new parent, ExxonMobil Holdings Corp. The XOM ticker now maps to the new CIK, whose record holds only the two newest 10-Qs; the years before sit under the old Exxon Mobil Corp CIK. The snapshot uses Chevron (CVX) instead. Following a predecessor CIK is left for the refresh job (2.7) to decide, if a tracked company does this.
+- **Filings are large and uneven.** The 72 pinned filings come to 321 MB, from 12.5 MB for Apple's twelve to 141 MB for JPMorgan's. JPMorgan's largest single filing is 13 MB of HTML. 1.3 indexes them, and 2.3 measures what that costs in memory.
 
 ## Failure cases
 5–10 concrete wrong answers, each with its tag and the trace that explained it. Added from Phase 5 on.
