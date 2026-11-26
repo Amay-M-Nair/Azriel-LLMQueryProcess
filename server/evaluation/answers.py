@@ -87,6 +87,9 @@ def answer(case: golden.GoldenCase, store: VectorStore, cache_dir: Path, provide
             for c, score in plan.sources
         ],
         "intent": trace.intent.name if trace.intent else None,
+        "intent_method": trace.intent.method if trace.intent else None,
+        "intent_reason": trace.intent.reason if trace.intent else None,
+        "rewrite_reason": trace.rewrite.reason if trace.rewrite else None,
         "route": trace.route.name if trace.route else None,
         "search_query": trace.search_query,
         "timings": trace.timings,

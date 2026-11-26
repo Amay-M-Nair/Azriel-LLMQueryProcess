@@ -272,3 +272,14 @@ def test_five_cases_were_graded_and_the_rerun_came_from_the_cache():
     if not reruns:
         pytest.skip("graded, but not yet rerun: run the judge once more to show the cache")
     assert reruns[-1]["cache_hits"] == reruns[-1]["graded"]
+
+
+def test_with_no_passages_the_passage_metrics_are_set_not_sent_to_the_judge(tmp_path):
+    empty = Sample("clarified", "And the year before?", "I could not tell what that is asking.", (), "$900 million.")
+    metrics = fakes()
+    report, _ = run([empty], metrics, ScoreCache(tmp_path / "scores.jsonl"))
+    scores = report.scores()["clarified"]
+    assert scores["context_precision"] == 0.0 and scores["context_recall"] == 0.0
+    assert scores["faithfulness"] is None, "no claims from passages to check"
+    assert not report.errors
+    assert len(metrics["answer_correctness"].calls) == 1 and len(metrics["faithfulness"].calls) == 0

@@ -73,6 +73,14 @@ METRIC_SETTINGS: dict[str, dict] = {
 }
 
 
+# What the passage metrics are when the pipeline retrieved nothing (a question it
+# routed to "clarify", say), which RAGAS refuses to score. Context precision and
+# recall are 0: no passage was useful, none held what the reference needs.
+# Faithfulness does not apply: a reply with no passages makes no claim from them.
+# None is left out of the mean, and the result's n says how many were.
+NO_PASSAGES: dict[str, float | None] = {"context_precision": 0.0, "context_recall": 0.0, "faithfulness": None}
+
+
 @dataclass(frozen=True)
 class Sample:
     """One answer to grade: the question as asked, what came back, and the golden reference."""
@@ -184,6 +192,11 @@ async def grade(samples: list[Sample], metrics: dict[str, Any], cache: ScoreCach
         if cached is not None:
             return cached | {"cached": True}
         row = {"key": key, "case_id": sample.case_id, "metric": name, "judge": judge}
+        if not sample.contexts and name in NO_PASSAGES:
+            row |= {"value": NO_PASSAGES[name], "reason": "no passages were retrieved",
+                    "graded_at": datetime.now(timezone.utc).isoformat(timespec="seconds")}
+            cache.put(row)
+            return row | {"cached": False}
         async with gate:
             if on_progress:
                 on_progress(f"grading {sample.case_id}: {name}")
