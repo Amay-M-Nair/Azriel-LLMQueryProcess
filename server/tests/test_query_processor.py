@@ -7,6 +7,7 @@ from backend import router
 from backend.query_processor import answer_now, process
 from backend.query_rewriter import needs_rewriting, rewrite
 from backend.providers.base import Provider
+from utils import config
 from ingestion.chunker import Chunk
 from vectorstore.faiss_store import VectorStore
 from vectorstore.metadata_store import DocumentRecord
@@ -213,3 +214,65 @@ def test_standalone_question_never_costs_a_call():
     result = rewrite("what is the refund policy?", HISTORY, provider=provider)
     assert provider.calls == 0
     assert not result.changed
+
+
+# --- What a question cost (ROADMAP 1.7) --------------------------------------
+
+class BilledFake(FakeProvider):
+    """Reports usage for every call, the way Groq does on its last chunk."""
+
+    def __init__(self, *replies, model=config.GROQ_CHEAP_MODEL):
+        super().__init__(*replies)
+        self.model = model
+
+    def stream(self, system, prompt):
+        yield from super().stream(system, prompt)
+        self._report_usage({"model": self.model, "prompt_tokens": 1000, "cached_tokens": 200,
+                            "completion_tokens": 500, "reasoning_tokens": 300})
+
+
+@pytest.mark.roadmap("1.7")
+def test_every_call_is_recorded_with_its_tokens_and_cost(store):
+    provider = BilledFake('{"intent":"document_query","requires_retrieval":true}', "x [1]")
+    plan = process("what is the refund window?", store=store, provider=provider)
+    answer_now(plan)
+    trace = plan.trace
+    assert len(trace.usage) == trace.api_calls == 2
+    assert trace.tokens == {"prompt_tokens": 2000, "cached_tokens": 400,
+                            "completion_tokens": 1000, "reasoning_tokens": 600}
+    one_call = (800 * 0.075 + 200 * 0.037 + 500 * 0.30) / 1_000_000
+    assert trace.cost == pytest.approx(2 * one_call)
+
+
+@pytest.mark.roadmap("1.7")
+def test_the_streamed_answer_counts_toward_latency(store):
+    plan = process("explain transformers", store=None, provider=BilledFake("Transformers are..."))
+    assert "answer" not in plan.trace.timings, "nothing has been generated yet"
+    answer_now(plan)
+    assert "answer" in plan.trace.timings
+    assert plan.trace.total_seconds == pytest.approx(sum(plan.trace.timings.values()))
+
+
+@pytest.mark.roadmap("1.7")
+def test_cost_is_unknown_not_zero_when_a_model_has_no_price(store):
+    plan = process("explain transformers", store=None, provider=BilledFake("x", model="some/unpriced-model"))
+    answer_now(plan)
+    assert plan.trace.cost is None
+
+
+@pytest.mark.roadmap("1.7")
+def test_cost_is_unknown_when_a_call_reported_no_usage(store):
+    plan = process("explain transformers", store=None, provider=FakeProvider("x"))
+    answer_now(plan)
+    assert plan.trace.api_calls == 1 and plan.trace.usage == [] and plan.trace.cost is None
+
+
+@pytest.mark.roadmap("1.7")
+def test_metering_never_touches_the_shared_provider(store):
+    provider = BilledFake("x")
+    first = process("explain transformers", store=None, provider=provider)
+    second = process("explain transformers", store=None, provider=provider)
+    answer_now(first)
+    answer_now(second)
+    assert provider.usage_sink is None
+    assert len(first.trace.usage) == len(second.trace.usage) == 1

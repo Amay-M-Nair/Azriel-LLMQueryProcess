@@ -94,6 +94,17 @@ Last checked against ROADMAP.md: 2026-11-27.
 - **The judge is lenient on hedged answers (found by hand, 2026-11-27).** The services-growth answer said the passages lacked the figure, then invented $35B → $38B; the filing says $109B → $123B. DeepSeek counted the three hedge sentences ("the excerpts do not include…") as true positives against the reference, so facts-only correctness still came to 0.46 (3 / (3 + ½·7)). The wrong figures were all caught as false positives. This is the case for P3 and P4.
 - **Money:** about $0.10 spent so far (the ping and two 5-case runs, ~120K input tokens). A full 1.8 run is about $1.10 (89 answerable cases × 12 calls).
 
+### 1.7 — Cost and latency accounting (2026-11-27)
+- **What is recorded:** every model call's stage, model and tokens (prompt, cached, completion, reasoning) go into `QueryTrace.usage`, through a per-question metered copy of the provider (`Provider.metered`), so a shared provider never mixes two questions' costs. `trace.cost` prices them from `config.PRICES`. `trace.total_seconds` now includes the streamed answer (the `answer` stage), which was not timed before.
+- **Prices** (`config.PRICES`, checked 2026-11-27 on the console.groq.com model pages, USD per 1M tokens): gpt-oss-120b $0.15 in / $0.075 cached / $0.60 out; gpt-oss-20b $0.075 / $0.037 / $0.30. Reasoning tokens are part of completion_tokens and billed as output.
+- **Unknown is never $0:** a call whose model has no price, or a question with fewer usage records than calls, makes the cost `None`, and a run with any unknown cost reports no $/query.
+- **Eval results carry them:** each answer record has `usage`, `tokens`, `cost` and `seconds`. `answers.summarize` gives `cost_per_query`, `p50_seconds` and `p95_seconds`, the keys the Results table reads, for 1.8 to write. `run_eval` prints tokens, $ and p50/p95 too.
+- **Bug found and fixed: the eval answered with no provider.** `answers.answer` passed none, so `process()` skipped the classifier and the rewriter: every cached answer shows `classify: 0.0, rewrite: 0.0` and 1 call. It now uses the configured provider. `RECORD_VERSION = 2` in the fingerprint starts a new answer set, so the 1.6 check's answers are not mixed with these.
+- **Live check (2 questions, Groq):** net sales took 2 calls (classify on 20b, answer on 120b), 2,547 input and 148 output tokens (85 reasoning), $0.00039. Answering the whole golden set costs about $0.04 on Groq, which is separate from the Bedrock credits.
+- **Found in the live check, left for the baseline to measure:**
+  - **Cold start.** The first question's retrieval took 16.5 s (loading models); a warm one takes about 0.5 s. 1.8 warms up before timing, or p95 measures the start-up rather than the pipeline.
+  - **Follow-ups fail at classification.** The classifier does not see the conversation, so "And how did that compare with the year before?" comes back `unknown`, routed to clarify ("I could not tell what that is asking"), before the rewriter can help. The app behaves the same way, so the baseline records it honestly. It is a strong first improvement row after 1.8: classify the rewritten question, or give the classifier the history.
+
 ### 1.6 — Facts that changed since ROADMAP.md was written
 - The 5 check cases now come from the approved `golden.jsonl` (the default), not from drafts with `--candidates`. They are the same 5 Apple cases, one per answerable type.
 

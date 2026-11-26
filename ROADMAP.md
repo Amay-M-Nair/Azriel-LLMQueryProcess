@@ -31,7 +31,7 @@ snapshot. Each upgrade is measured against a baseline before it counts.
 | Phase | Done | Next |
 |---|---|---|
 | 0 Foundations | 7/7 | complete |
-| 1 Data and baseline | 6/9 | 1.7 Cost and latency accounting |
+| 1 Data and baseline | 7/9 | 1.8 Baseline run |
 | 2 Database and API | 0/7 | 2.1 Neon schema |
 | 3 Structured outputs | 0/3 | 3.1 Schemas |
 | 4 Parsing and hybrid retrieval | 0/6 | 4.1 Layout-aware 10-K and 10-Q parsing |
@@ -180,7 +180,7 @@ Temperature starts at OpenAI's recommended 1.0 for gpt-oss. 1.0 vs 0.3 is run as
   - **Open decision:** how 1.8 is judged. The free tier is too slow for the full set (see *Findings, 1.6*). Options: paid tier (about $1–2 a run), or free tier with fewer calls per question plus RAGAS on a 25-question subset for ablations.
   - Answers are generated once by the pipeline and cached under a fingerprint of everything that produced them (`evaluation/answers.py`). At temperature 1.0 a regenerated answer would be a different answer.
   - *Done when:* it runs on 5 cases and the cache hits on rerun.
-- [ ] **1.7 Cost and latency accounting**
+- [x] **1.7 Cost and latency accounting**
   - Tokens, $ (from a price table), and p50/p95 latency recorded in `QueryTrace`.
   - *Done when:* every eval result carries them.
 - [ ] **1.8 Baseline run**

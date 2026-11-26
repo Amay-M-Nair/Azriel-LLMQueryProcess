@@ -28,6 +28,8 @@ import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
+import numpy as np
+
 from backend.llm import get_provider
 from backend.query_processor import Plan, process
 from ingestion.pipeline import build_index
@@ -300,8 +302,19 @@ def report(results: list[Result], check_answers: bool, index_size: int) -> None:
     say(f"\nAPI calls            {calls} total, "
           f"{calls / max(len(results), 1):.2f} per question")
     say(f"Answered for free    {len(free)}/{len(results)} questions")
-    say(f"Latency              median {sorted(seconds)[len(seconds) // 2]:.2f}s, "
-          f"worst {max(seconds):.2f}s")
+    say(f"Latency              p50 {np.percentile(seconds, 50):.2f}s, "
+          f"p95 {np.percentile(seconds, 95):.2f}s, worst {max(seconds):.2f}s")
+    tokens = [r.plan.trace.tokens for r in results]
+    say(f"Tokens               {sum(t['prompt_tokens'] for t in tokens):,} in, "
+          f"{sum(t['completion_tokens'] for t in tokens):,} out "
+          f"({sum(t['reasoning_tokens'] for t in tokens):,} of them reasoning)")
+    costs = [r.plan.trace.cost for r in results]
+    if any(c is None for c in costs):
+        say(f"Cost                 unknown for {sum(c is None for c in costs)} question(s): "
+              "an unpriced model, or a call that reported no usage")
+    else:
+        say(f"Cost                 ${sum(costs):.4f} total, ${sum(costs) / max(len(costs), 1):.5f} "
+              f"per question (prices checked {config.PRICES_CHECKED})")
 
     stages: dict[str, list[float]] = {}
     for r in results:

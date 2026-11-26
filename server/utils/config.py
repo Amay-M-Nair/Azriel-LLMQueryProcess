@@ -96,6 +96,17 @@ GROQ_RETRY_BACKOFF = 2.0     # seconds, used only if the API suggests nothing
 GROQ_MAX_WAIT = 30.0         # never block longer than this between tries
 
 OLLAMA_MODEL = "llama3.2:3b"     # fits comfortably in 4 GB of VRAM
+
+# --- What a call costs (ROADMAP 1.7) -----------------------------------------
+# USD per 1M tokens, from the console.groq.com model pages, checked on the
+# date below. Reasoning tokens are part of completion_tokens and billed as
+# output. A model missing here is unpriced: its question's cost is unknown,
+# never $0.
+PRICES_CHECKED = "2026-11-27"
+PRICES: dict[str, dict[str, float]] = {
+    "openai/gpt-oss-120b": {"input": 0.15, "cached_input": 0.075, "output": 0.60},
+    "openai/gpt-oss-20b": {"input": 0.075, "cached_input": 0.037, "output": 0.30},
+}
 OLLAMA_HOST = "http://localhost:11434"
 OLLAMA_NUM_PREDICT = 2048
 OLLAMA_TIMEOUT = 300             # seconds; local models can be slow

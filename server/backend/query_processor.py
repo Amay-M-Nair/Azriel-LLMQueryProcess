@@ -13,9 +13,9 @@ the app is exactly what gets measured.
 import time
 from contextlib import contextmanager
 from dataclasses import dataclass, field
-from typing import Callable
+from typing import Callable, Iterator
 
-from backend import calculator, intent_classifier, query_rewriter, rag, router
+from backend import calculator, intent_classifier, pricing, query_rewriter, rag, router
 from backend.intent_classifier import Intent
 from backend.llm import Provider
 from backend.query_rewriter import Rewrite
@@ -45,6 +45,7 @@ class QueryTrace:
     retrieved: list[tuple[Chunk, float]] = field(default_factory=list)
     timings: dict[str, float] = field(default_factory=dict)
     api_calls: int = 0
+    usage: list[dict] = field(default_factory=list)   # one per model call: stage, model, tokens
     notes: list[str] = field(default_factory=list)
 
     @property
@@ -54,7 +55,25 @@ class QueryTrace:
 
     @property
     def total_seconds(self) -> float:
+        """The question's latency: every stage, the streamed answer included."""
         return sum(self.timings.values())
+
+    @property
+    def tokens(self) -> dict[str, int]:
+        keys = ("prompt_tokens", "cached_tokens", "completion_tokens", "reasoning_tokens")
+        return {k: sum(u.get(k, 0) for u in self.usage) for k in keys}
+
+    @property
+    def cost(self) -> float | None:
+        """Dollars spent on this question, or None when it cannot be known.
+
+        Unknown when a call's model has no price, or when a call reported no
+        usage (fewer usage records than calls made).
+        """
+        costs = [pricing.call_cost(u) for u in self.usage]
+        if len(costs) < self.api_calls or any(c is None for c in costs):
+            return None
+        return sum(costs)
 
     @contextmanager
     def timed(self, stage: str):
@@ -101,6 +120,8 @@ def process(
     say = on_stage or (lambda _message: None)
     query = preprocess(question)
     trace = QueryTrace(query=query)
+    if provider is not None:
+        provider = provider.metered(trace.usage.append)
 
     has_index = bool(store is not None and len(store) > 0)
     sources = store.sources if has_index else []
@@ -181,10 +202,10 @@ def process(
             say(f"Writing from {len(trace.retrieved)} excerpts")
             return Plan(
                 trace,
-                stream=lambda: rag.stream_answer(
+                stream=_timed(trace, lambda: rag.stream_answer(
                     query.original, trace.retrieved, provider=provider,
                     length=length, history=history,
-                ),
+                )),
             )
 
     # --- Direct path ---
@@ -192,10 +213,18 @@ def process(
     trace.api_calls += 1
     return Plan(
         trace,
-        stream=lambda: rag.stream_direct_answer(
+        stream=_timed(trace, lambda: rag.stream_direct_answer(
             query.original, history, provider=provider, length=length
-        ),
+        )),
     )
+
+
+def _timed(trace: QueryTrace, make_stream: Callable[[], Iterator[str]]) -> Callable[[], Iterator[str]]:
+    """The answer stream, timed as the "answer" stage from first request to last token."""
+    def run() -> Iterator[str]:
+        with trace.timed("answer"):
+            yield from make_stream()
+    return run
 
 
 def answer_now(plan: Plan) -> str:

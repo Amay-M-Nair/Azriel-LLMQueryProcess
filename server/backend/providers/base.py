@@ -5,8 +5,9 @@ text arrives. That is the whole interface - everything else (retrieval,
 chunking, the UI) is provider-independent.
 """
 
+import copy
 from abc import ABC, abstractmethod
-from typing import Iterator
+from typing import Callable, Iterator
 
 
 class ProviderNotReady(RuntimeError):
@@ -58,8 +59,26 @@ class Provider(ABC):
         return self
 
     #: Token counts from the most recent call, when the provider reports them:
-    #: {"model", "prompt_tokens", "completion_tokens", "reasoning_tokens"}.
+    #: {"model", "prompt_tokens", "cached_tokens", "completion_tokens", "reasoning_tokens"}.
     last_usage: dict | None = None
+    #: The pipeline stage this copy is configured for (see `for_stage`).
+    stage: str = "default"
+    #: Called with each call's usage and stage, on a metered copy.
+    usage_sink: Callable[[dict], None] | None = None
+
+    def metered(self, sink: Callable[[dict], None]) -> "Provider":
+        """A copy that reports every call's usage to `sink`, stages included.
+
+        A copy, so a provider shared between questions never mixes their costs.
+        """
+        meter = copy.copy(self)
+        meter.usage_sink = sink
+        return meter
+
+    def _report_usage(self, usage: dict) -> None:
+        self.last_usage = usage
+        if self.usage_sink is not None:
+            self.usage_sink(usage | {"stage": self.stage})
 
     def is_ready(self) -> bool:
         try:

@@ -79,7 +79,8 @@ def test_streams_answer_text_and_never_the_reasoning(fake):
     provider = GroqProvider()
     assert "".join(provider.stream("sys", "q")) == "Revenue was $391bn [1]."
     assert provider.last_usage == {
-        "model": STRONG, "prompt_tokens": 100, "completion_tokens": 60, "reasoning_tokens": 40,
+        "model": STRONG, "prompt_tokens": 100, "cached_tokens": 0, "completion_tokens": 60,
+        "reasoning_tokens": 40,
     }
 
 
@@ -180,3 +181,15 @@ def test_the_setup_checker_reports_groq_ready(monkeypatch, capsys):
     ready = check.report_readiness()
     assert "groq" in ready
     assert "-> groq" in capsys.readouterr().out
+
+
+@pytest.mark.roadmap("1.7")
+def test_a_metered_stage_reports_its_usage_with_the_stage_and_cached_tokens(fake):
+    billed = SimpleNamespace(prompt_tokens=100, completion_tokens=60,
+                             completion_tokens_details=SimpleNamespace(reasoning_tokens=40),
+                             prompt_tokens_details=SimpleNamespace(cached_tokens=64))
+    fake({CHEAP: [[chunk(content="ok"), chunk(usage=billed)]]})
+    seen = []
+    list(GroqProvider().metered(seen.append).for_stage("classify").stream("sys", "q"))
+    assert seen == [{"model": CHEAP, "prompt_tokens": 100, "cached_tokens": 64, "completion_tokens": 60,
+                     "reasoning_tokens": 40, "stage": "classify"}]

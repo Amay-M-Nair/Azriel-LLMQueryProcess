@@ -79,6 +79,7 @@ class GroqProvider(Provider):
         )
         staged = copy.copy(self)
         staged.model, staged.reasoning_effort, staged.last_usage = model, effort, None
+        staged.stage = stage
         return staged
 
     def _api_key(self) -> str:
@@ -181,12 +182,14 @@ class GroqProvider(Provider):
         if usage is None:
             return
         details = getattr(usage, "completion_tokens_details", None)
-        self.last_usage = {
+        prompt_details = getattr(usage, "prompt_tokens_details", None)
+        self._report_usage({
             "model": model,
             "prompt_tokens": getattr(usage, "prompt_tokens", 0) or 0,
+            "cached_tokens": getattr(prompt_details, "cached_tokens", 0) or 0,
             "completion_tokens": getattr(usage, "completion_tokens", 0) or 0,
             "reasoning_tokens": getattr(details, "reasoning_tokens", 0) or 0,
-        }
+        })
 
 
 def _explain(exc, model: str) -> str:
