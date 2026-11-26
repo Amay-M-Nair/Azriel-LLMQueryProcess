@@ -108,7 +108,9 @@ def commit() -> tuple[str, bool]:
     """The commit the run measured, and whether the working tree had changes on top."""
     try:
         head = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=config.REPO_ROOT, text=True).strip()
-        dirty = bool(subprocess.check_output(["git", "status", "--porcelain", "--", "server"],
+        # Tracked files only: an untracked file (this run's own results file, say) is
+        # not code the run imported.
+        dirty = bool(subprocess.check_output(["git", "status", "--porcelain", "--untracked-files=no", "--", "server"],
                                              cwd=config.REPO_ROOT, text=True).strip())
         return head, dirty
     except (OSError, subprocess.CalledProcessError):
