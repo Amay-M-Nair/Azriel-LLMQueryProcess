@@ -181,6 +181,10 @@ def main() -> None:
     st.subheader(case.question)
     answer = st.text_area("Reference answer (edit it if it is wrong or unclear)", value=case.answer,
                           key=f"a-{case.id}", height=100)
+    st.caption("The answer may say only what the highlighted passages say: nothing from the text around them.")
+    uncited = golden.uncited_figures(case.model_copy(update={"answer": answer}))
+    if uncited:
+        st.warning(f"Not in any highlighted passage or the calculation: {', '.join(uncited)}")
     if case.calculation:
         st.markdown(f"**Calculation:** `{case.calculation}`")
     if case.notes:

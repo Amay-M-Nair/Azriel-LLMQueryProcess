@@ -31,7 +31,7 @@ snapshot. Each upgrade is measured against a baseline before it counts.
 | Phase | Done | Next |
 |---|---|---|
 | 0 Foundations | 7/7 | complete |
-| 1 Data and baseline | 4/9 | 1.4 Golden set |
+| 1 Data and baseline | 5/9 | 1.6 RAGAS |
 | 2 Database and API | 0/7 | 2.1 Neon schema |
 | 3 Structured outputs | 0/3 | 3.1 Schemas |
 | 4 Parsing and hybrid retrieval | 0/6 | 4.1 Layout-aware 10-K and 10-Q parsing |
@@ -77,7 +77,7 @@ Temperature starts at OpenAI's recommended 1.0 for gpt-oss. 1.0 vs 0.3 is run as
 | 2026-11-24 | 0 | pypdf, pymupdf, google-genai, anthropic | held at newest 6.x / 1.x / 2.x / 1.x | new majors (7 / 2 / 3 / 2) exist; taken in the phase that touches that code |
 | 2026-11-25 | 1 | httpx | 0.28.1 | still the newest release; `httpx.MockTransport` replays recorded EDGAR responses, so no mocking library is added |
 | 2026-11-26 | 1 | pydantic | 2.14.4 | pinned at 1.4 for the golden-set schema; upgraded from 2.13.5, which fastapi had pulled in. `pip check` clean |
-| 2026-11-25 | 1 | ragas | 0.4.4 newest | pinned at 1.6, after checking its Gemini judge support |
+| 2026-11-26 | 1 | ragas / instructor / openai | 0.4.4 / 1.17.0 / 3.3.0 | ragas adds ~20 packages (langgraph, langchain-openai, datasets, ...) and imports langchain-community, which prints a sunset warning; chosen over a hand-written judge so the scores are RAGAS's own. Its google-genai route sends safety settings Gemini rejects (instructor#1658), so the judge uses Gemini's OpenAI-compatible endpoint. instructor pinned: pip otherwise picks 1.3, which predates openai 2 |
 
 ---
 
@@ -146,8 +146,8 @@ Temperature starts at OpenAI's recommended 1.0 for gpt-oss. 1.0 vs 0.3 is run as
   - `ticker`, `accession`, `form`, `fiscal_year` and `fiscal_period` ride along as chunk metadata. So do character offsets into the filing's text, which the 1.4 span labels are matched against.
   - `python -m ingestion.filings` indexes into `data/snapshot_index/v{version}/`. It saves after each company and skips filings already indexed, so an interrupted run resumes.
   - *Done when:* the snapshot is indexed.
-- [ ] **1.4 Golden set**
-  - 60–100 hand-verified questions with a Pydantic schema, covering table lookups, text lookups, follow-ups, multi-hop/cross-period, definitions, summaries and unanswerable questions.
+- [x] **1.4 Golden set**
+  - 60–101 hand-verified questions (the cap was 100; all 101 reviewed drafts were approved, so it was raised by one) with a Pydantic schema, covering table lookups, text lookups, follow-ups, multi-hop/cross-period, definitions, summaries and unanswerable questions.
   - Both forms are covered: at least 20 cases are answered from 10-Qs.
     - Cross-period means year over year and quarter over quarter.
     - Some Q4 questions must be derived. For flow figures (revenue, income, cash flow), Q4 is the 10-K's annual figure minus the Q3 10-Q's nine-month figure. Balance-sheet figures are a point in time, so Q4 is read straight from the 10-K.
@@ -156,8 +156,11 @@ Temperature starts at OpenAI's recommended 1.0 for gpt-oss. 1.0 vs 0.3 is run as
   - How the set is made (`evaluation/golden.py`):
     - Cases are drafted into `golden_candidates.jsonl`. `python -m evaluation.golden locate` turns each quoted passage into offsets, and refuses a quote that is not unique in its filing.
     - A person reviews each one in `evaluation/review_app.py`, which shows the highlighted passage inside its filing. An unanswerable case comes with a search box over the filings.
+    - The review app is a local Streamlit tool for building the golden set, not part of the product: it is never deployed. The product UI is React + FastAPI (Phase 9). When the interim Streamlit page goes in Phase 9, Streamlit stays only for this tool, kept out of the deployed service.
     - Approved cases go to `golden.jsonl`, stamped with the reviewer and date. Rejected ones go to `golden_rejected.jsonl` with the reason.
+    - **A reference answer says only what its cited passages say.** Nothing from the surrounding text, and no interpretation ("led by Oncology"). A claim the answer needs is cited, or it is dropped. `check` enforces this for figures: every number in an answer must appear in a cited quote or in the calculation, allowing for rounding and millions written as billions. A derived figure (a growth %, a Q4) needs its calculation. Prose claims are checked by the reviewer, and the review app shows any uncited figure as a warning.
   - *Done when:* every case validates, with at least 8 of each type and at least 20 on 10-Qs.
+  - *Done 2026-11-26:* all 101 drafts reviewed by hand and approved into `golden.jsonl` (22 table, 20 text, 15 cross-period, 12 follow-up, 12 unanswerable, 10 definition, 10 summary; 27 on 10-Qs). 15 were corrected during the review (see *Findings, 1.3–1.4*).
 - [x] **1.5 Exact metrics, from scratch**
   - NumPy recall@k, MRR, nDCG@10, bootstrap CI, Cohen's kappa (`evaluation/metrics.py`).
   - Retrieval is scored against **evidence**, not chunks:
@@ -167,8 +170,15 @@ Temperature starts at OpenAI's recommended 1.0 for gpt-oss. 1.0 vs 0.3 is run as
   - Each metric is a mean over questions with a 95% percentile-bootstrap interval. Two configurations are compared with a paired bootstrap of their per-question difference.
   - *Done when:* unit tests against hand-worked examples pass.
 - [ ] **1.6 RAGAS**
-  - Faithfulness, answer relevancy, context precision and recall, answer correctness.
+  - Faithfulness, answer relevancy, context precision and recall, answer correctness (`evaluation/judge.py`).
   - The judge is Gemini; results are cached.
+    - Each metric has its own fixed model (`JUDGE_MODELS` in `utils/config.py`), never a fall-through list: a metric graded by two models would mix two scales. Five models means five free-tier quotas. Changing one metric's model re-grades that metric only.
+    - It grades the top 5 retrieved passages, which is what the answer model saw. Its token limit is 8,192, because Gemini's thinking counts against it.
+    - Two caches: every grade (keyed by answer, metric and judge) in `data/judge_cache/scores.jsonl`, and every judge call in RAGAS's disk cache. A rerun costs nothing, and a metric cut off halfway resumes without repeating calls.
+  - It runs on Gemini's free tier. When one model's daily quota runs out, its metric stops and the others carry on; the next run continues from the cache. A per-minute limit or a 503 "high demand" is waited out.
+  - The 5 check cases are drafts from `golden_candidates.jsonl` (`--candidates`), since `golden.jsonl` does not exist until 1.4's review. This is a check that the judge works, not an evaluation; the golden-set evaluation is 1.8.
+  - **Open decision:** how 1.8 is judged. The free tier is too slow for the full set (see *Findings, 1.6*). Options: paid tier (about $1–2 a run), or free tier with fewer calls per question plus RAGAS on a 25-question subset for ablations.
+  - Answers are generated once by the pipeline and cached under a fingerprint of everything that produced them (`evaluation/answers.py`). At temperature 1.0 a regenerated answer would be a different answer.
   - *Done when:* it runs on 5 cases and the cache hits on rerun.
 - [ ] **1.7 Cost and latency accounting**
   - Tokens, $ (from a price table), and p50/p95 latency recorded in `QueryTrace`.
@@ -239,6 +249,8 @@ Temperature starts at OpenAI's recommended 1.0 for gpt-oss. 1.0 vs 0.3 is run as
   - *Done when:* the golden table figures are found in the extracted tables.
 - [ ] **4.3 Metadata filters**
   - Company, year and quarter extracted from the question ("Q3 2025", "last quarter"); "latest" resolves to the newest filing. The UI filter overrides it.
+  - Periods are the company's **fiscal** periods (Apple's year ends in September, Microsoft's in June), as stored on each chunk from the cover data.
+  - No filing covers Q4 on its own, so a Q4 question filters to two filings: that fiscal year's 10-K and its Q3 10-Q. 6.1 then subtracts (flow figures) or reads the 10-K directly (balance-sheet figures).
   - *Done when:* the filter ablation row is filled.
 - [ ] **4.4 Chunking comparison**
   - Recursive vs section-aware vs parent-child.
@@ -326,6 +338,7 @@ Temperature starts at OpenAI's recommended 1.0 for gpt-oss. 1.0 vs 0.3 is run as
 - [ ] **9.4 Render deployment**
   - `render.yaml` with a static site and a FastAPI web service.
   - Env vars: Neon `DATABASE_URL`, `GROQ_API_KEY`, `SEC_USER_AGENT`, allowed origin.
+  - The deployed service installs only what it serves: no Streamlit (the golden-set review tool stays local) and no evaluation-only packages (RAGAS and its dependencies).
   - The 2.7 refresh runs on a schedule: a Render cron job, or a GitHub Actions scheduled workflow if the free tier rules that out (checked at this step). Daily is enough: filings arrive a few times a year per company.
 - [ ] **9.5 Public hardening**
   - Per-IP and daily LLM caps; an optional bring-your-own-key header that is never logged.
@@ -380,6 +393,13 @@ What it showed:
 - **The 72 filings make 31,119 chunks**, indexed in 15.4 minutes on CPU. Size varies by a factor of 13: an Apple 10-Q is about 10,000 words (about 90 chunks), a JPMorgan 10-Q about 130,000 (about 1,100 chunks).
 - **The minimal loader reads tables unevenly.** Most filings' tables come out one row per line ("Total net sales | 478,834 | 416,161 | 391,035"). Microsoft's come out one cell per line, with the row label, the "$" signs and each year's figure on separate lines. A chunk can then hold figures whose label sits in the previous chunk. This is what 4.2 is for, and the golden set's table questions will show how much it costs.
 - **The same figure often appears several times in one filing** (the income statement, the MD&A table, the segment note). A golden span has to say which occurrence it means, so quotes are lengthened until they are unique: often by taking in the row above.
+- **The drafts' answers often said more than their highlights** (found in review, 2026-11-26). 15 of 101 drafts:
+  - The highlight stopped a sentence early, so the answer's figure or reason sat in the next sentence (Azure's 41%, JPMorgan's expense drivers, J&J's 53-week years).
+  - A total came from a table row that was not cited (Walmart's segment net sales, JPMorgan's NII and NIR, Chevron's employee split).
+  - A derived figure had no calculation (Apple's Q1 2025 "up 4%").
+  - A claim came from no passage at all: Chevron's "lower prices cut revenues", which the filing explains differently (realizations, DD&A, operating costs, currency); and "led by Oncology".
+  - One was a misreading: CARVYKTI grew on share gains and capacity expansion, not market growth.
+  - All were fixed by citing the passage or dropping the claim. One already-approved case went back to the review. The figure check above now catches the mechanical kind.
 
 ### 1.5 — A first look at retrieval (2026-11-26, preview, not the baseline)
 Run on the 101 drafted candidates before review, so it does not count as a Results row; 1.8 is the baseline. It shows the metrics working on real data, and where the baseline will be weak.
@@ -394,6 +414,14 @@ Run on the 101 drafted candidates before review, so it does not count as a Resul
 
   94% of the top-10 chunks came from the right company, but only 16% from a filing that holds the answer. Each company has twelve filings that read alike, and nothing in the search knows which year or quarter was asked about. The metadata filters of 4.3 address exactly this.
 - **By type, recall@10:** definitions 0.40, cross-period 0.27, text 0.25, tables 0.14, follow-ups 0.08, summaries 0.07. Follow-ups are low because the question alone ("And how did that compare with the year before?") names no company. The pipeline's rewriter is meant to fix that, and 1.8 runs it.
+
+### 1.6 — The judge on the free tier (2026-11-26, in progress)
+- **The free tier allows 20 requests a day per model**, and RAGAS needs about 14 judge calls per question: faithfulness 2, answer relevancy 3, context precision 5 (one per passage), context recall 1, answer correctness 3.
+- **Real capacity is lower than 20.** Retries after 503 "high demand" appear to count against the daily quota, so a model gives roughly 10–15 grades a day. A run of 24 calls took 41 minutes.
+- **What that means:** with one model per metric, context precision is the bottleneck. A full golden-set run (1.8) would take over a month on the free tier.
+- **Progress on the 5 check cases:** 13 of 25 grades done; context recall is done for all five. Results in `server/evaluation/results/ragas_check.json`.
+- **The scores make sense so far.** The employees answer had no supporting passage retrieved (context recall 0.00) and scored 0.17 on correctness: the same retrieval weakness 1.5 found.
+- **Left to do:** rerun after the quotas reset (about 08:00 UTC) until all 25 grades exist, then one rerun served entirely from the cache. The judge decision (paid or free + subset) is still open.
 
 ## Failure cases
 5–10 concrete wrong answers, each with its tag and the trace that explained it. Added from Phase 5 on.

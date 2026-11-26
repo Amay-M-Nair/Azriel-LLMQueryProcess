@@ -43,7 +43,7 @@ GOLDEN = config.PROJECT_ROOT / "evaluation" / "golden.jsonl"
 CANDIDATES = config.PROJECT_ROOT / "evaluation" / "golden_candidates.jsonl"
 TEXT_VERSION = "html_text-1.3"
 
-MIN_CASES, MAX_CASES = 60, 100
+MIN_CASES, MAX_CASES = 60, 101   # 101: every reviewed draft was approved (2026-11-26)
 MIN_PER_TYPE = 8
 MIN_FROM_10Q = 20
 
@@ -173,7 +173,44 @@ def problems(cases: list[GoldenCase], text_of=filing_text, pinned: dict | None =
         for period in case.about:
             if period.ticker not in {f["ticker"] for f in pinned.values()}:
                 found.append(f"{case.id}: {period.ticker} is not a snapshot company")
+        uncited = uncited_figures(case)
+        if uncited:
+            found.append(f"{case.id}: no cited passage or calculation gives {', '.join(uncited)}")
     return found
+
+
+# A reference answer may say only what its cited passages say. Prose claims
+# need a person to check, but figures can be checked mechanically: every
+# number in the answer must appear in a cited quote or in the calculation,
+# allowing for rounding and for millions written as billions (482,975 -> 483.0).
+_NUMBER = re.compile(r"(?<![\w.])(\d{1,3}(?:,\d{3})+|\d+)(?:\.(\d+))?(?!\d)")
+_YEAR = re.compile(r"(19|20)\d\d")
+_DAY = re.compile(r"(January|February|March|April|May|June|July|August|September|October|November|December)\s+$")
+_NUMBER_WORDS = {w: float(i) for i, w in enumerate(
+    "zero one two three four five six seven eight nine ten eleven twelve".split())}
+
+
+def _numbers(text: str) -> list[tuple[float, int, str, int]]:
+    """(value, decimal places, as written, position) for each number in `text`."""
+    return [(float(m.group(1).replace(",", "") + (f".{m.group(2)}" if m.group(2) else "")),
+             len(m.group(2) or ""), m.group(0), m.start()) for m in _NUMBER.finditer(text)]
+
+
+def uncited_figures(case: GoldenCase) -> list[str]:
+    """Figures in the reference answer that no cited quote or the calculation gives."""
+    if not case.spans:
+        return []
+    source = " ".join([s.quote for s in case.spans] + [case.calculation])
+    values = [v for v, _, _, _ in _numbers(source)]
+    values += [_NUMBER_WORDS[w] for w in re.findall(r"[a-z]+", source.lower()) if w in _NUMBER_WORDS]
+    missing = []
+    for value, places, written, at in _numbers(case.answer):
+        if not places and (_YEAR.fullmatch(written) or _DAY.search(case.answer[:at])):
+            continue  # a year or a day of the month, not a figure
+        tolerance = 0.5 * 10 ** -places + 1e-9
+        if not any(abs(v * scale - value) <= tolerance for v in values for scale in (1, 1e-3, 1e3)):
+            missing.append(written)
+    return missing
 
 
 def coverage(cases: list[GoldenCase], pinned: dict | None = None) -> dict:

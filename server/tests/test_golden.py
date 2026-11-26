@@ -2,7 +2,7 @@
 
 The offline tests use a made-up filing. The last tests read the real files:
 every drafted candidate must check out against the pinned filings, and the
-"done when" (every approved case valid, 60-100 of them, at least 8 of each
+"done when" (every approved case valid, 60-101 of them, at least 8 of each
 type and 20 from 10-Qs, all verified by hand) is skipped, not failed, while
 the review is still under way, so 1.4 stays unticked until it is finished.
 """
@@ -108,6 +108,20 @@ def test_a_quote_that_is_not_at_its_offsets_is_a_problem():
     moved = case(spans=[span("approximately 5,000 employees", start=0)])
     assert golden.problems([moved], text_of=lambda a: TEXT, pinned=PINNED)
     assert golden.problems([case()], text_of=lambda a: TEXT, pinned=PINNED) == []
+
+
+def test_every_figure_in_the_answer_must_be_in_a_cited_passage():
+    def figures(answer, calculation=""):
+        return golden.uncited_figures(case(answer=answer, calculation=calculation,
+                                           spans=[span("Total net sales | 1,000 | 900", start=10)]))
+
+    assert figures("$1,000 million, up from $900 million.") == []
+    assert figures("$1.0 billion.") == [], "millions written as billions, rounded"
+    assert figures("$1,000 million, up 11%.") == ["11"], "a derived figure needs a calculation"
+    assert figures("$1,000 million, up 11%.", calculation="(1,000 - 900) / 900 = 11.1%") == []
+    assert figures("$1,000 million in fiscal 2026, to October 31.") == [], "years and days are not figures"
+    assert figures("$1,200 million.") == ["1,200"]
+    assert golden.problems([case(answer="About 6,000.")], text_of=lambda a: TEXT, pinned=PINNED)
 
 
 def test_unknown_filings_companies_and_repeated_ids_are_problems():
