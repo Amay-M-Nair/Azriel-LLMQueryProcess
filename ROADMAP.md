@@ -31,7 +31,7 @@ snapshot. Each upgrade is measured against a baseline before it counts.
 | Phase | Done | Next |
 |---|---|---|
 | 0 Foundations | 7/7 | complete |
-| 1 Data and baseline | 3/9 | 1.4 Golden set |
+| 1 Data and baseline | 4/9 | 1.4 Golden set |
 | 2 Database and API | 0/7 | 2.1 Neon schema |
 | 3 Structured outputs | 0/3 | 3.1 Schemas |
 | 4 Parsing and hybrid retrieval | 0/6 | 4.1 Layout-aware 10-K and 10-Q parsing |
@@ -158,8 +158,13 @@ Temperature starts at OpenAI's recommended 1.0 for gpt-oss. 1.0 vs 0.3 is run as
     - A person reviews each one in `evaluation/review_app.py`, which shows the highlighted passage inside its filing. An unanswerable case comes with a search box over the filings.
     - Approved cases go to `golden.jsonl`, stamped with the reviewer and date. Rejected ones go to `golden_rejected.jsonl` with the reason.
   - *Done when:* every case validates, with at least 8 of each type and at least 20 on 10-Qs.
-- [ ] **1.5 Exact metrics, from scratch**
-  - NumPy recall@k, MRR, nDCG@10, bootstrap CI, Cohen's kappa.
+- [x] **1.5 Exact metrics, from scratch**
+  - NumPy recall@k, MRR, nDCG@10, bootstrap CI, Cohen's kappa (`evaluation/metrics.py`).
+  - Retrieval is scored against **evidence**, not chunks:
+    - A chunk *covers* a golden span when their overlap is at least half of the shorter of the two. That counts a chunk inside a long passage, and a chunk holding most of a table row, but not a neighbouring window that only grazes the span.
+    - Each span counts once however many chunks cover it, so a smaller chunk size cannot score better by cutting one answer into more pieces, and nDCG cannot exceed 1.
+  - Unanswerable questions have no retrieval score; declining is measured in 5.4.
+  - Each metric is a mean over questions with a 95% percentile-bootstrap interval. Two configurations are compared with a paired bootstrap of their per-question difference.
   - *Done when:* unit tests against hand-worked examples pass.
 - [ ] **1.6 RAGAS**
   - Faithfulness, answer relevancy, context precision and recall, answer correctness.
@@ -375,6 +380,20 @@ What it showed:
 - **The 72 filings make 31,119 chunks**, indexed in 15.4 minutes on CPU. Size varies by a factor of 13: an Apple 10-Q is about 10,000 words (about 90 chunks), a JPMorgan 10-Q about 130,000 (about 1,100 chunks).
 - **The minimal loader reads tables unevenly.** Most filings' tables come out one row per line ("Total net sales | 478,834 | 416,161 | 391,035"). Microsoft's come out one cell per line, with the row label, the "$" signs and each year's figure on separate lines. A chunk can then hold figures whose label sits in the previous chunk. This is what 4.2 is for, and the golden set's table questions will show how much it costs.
 - **The same figure often appears several times in one filing** (the income statement, the MD&A table, the segment note). A golden span has to say which occurrence it means, so quotes are lengthened until they are unique: often by taking in the row above.
+
+### 1.5 — A first look at retrieval (2026-11-26, preview, not the baseline)
+Run on the 101 drafted candidates before review, so it does not count as a Results row; 1.8 is the baseline. It shows the metrics working on real data, and where the baseline will be weak.
+- **Every one of the 128 golden spans is covered by some chunk in the index** at the 50% threshold. So a miss is always a ranking failure, never an unfindable span.
+- **Retrieval finds the company but not the filing.** On the 89 answerable questions, today's hybrid search (top 10, question text only) scored:
+
+  | Metric | Value | 95% CI |
+  |---|---|---|
+  | recall@10 | 0.199 | 0.122–0.282 |
+  | MRR | 0.109 | 0.057–0.169 |
+  | nDCG@10 | 0.120 | 0.068–0.178 |
+
+  94% of the top-10 chunks came from the right company, but only 16% from a filing that holds the answer. Each company has twelve filings that read alike, and nothing in the search knows which year or quarter was asked about. The metadata filters of 4.3 address exactly this.
+- **By type, recall@10:** definitions 0.40, cross-period 0.27, text 0.25, tables 0.14, follow-ups 0.08, summaries 0.07. Follow-ups are low because the question alone ("And how did that compare with the year before?") names no company. The pipeline's rewriter is meant to fix that, and 1.8 runs it.
 
 ## Failure cases
 5–10 concrete wrong answers, each with its tag and the trace that explained it. Added from Phase 5 on.
