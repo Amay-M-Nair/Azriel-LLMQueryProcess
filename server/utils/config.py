@@ -151,6 +151,23 @@ EDGAR_MAX_WAIT = 60.0         # never wait longer than this between tries
 EDGAR_TICKER_MAP_MAX_AGE_DAYS = 7
 
 
+# --- Evaluation judge (ROADMAP 1.6, NEO D1) ---------------------------------
+# RAGAS grades the answers with DeepSeek on AWS Bedrock: a different family
+# from the gpt-oss models that write them, so the judge is not marking its own
+# work. One model for every metric; grades are keyed by it, so changing it
+# re-grades everything. Needs AWS_BEARER_TOKEN_BEDROCK (a Bedrock API key).
+# Bedrock's OpenAI-compatible endpoint for third-party models; ids there drop
+# the ":0" version suffix.
+JUDGE_MODEL = "deepseek.v3.2"   # confirm with  python -m evaluation.judge --ping
+JUDGE_BASE_URL = "https://bedrock-mantle.us-east-1.api.aws/v1"
+JUDGE_EMBED_MODEL = EMBED_MODEL  # answer relevancy and correctness embed locally, free
+JUDGE_MAX_TOKENS = 8192         # RAGAS's default of 1024 can cut a long structured reply short
+JUDGE_CONTEXTS = 5              # retrieved chunks graded per answer: what the answer model saw
+JUDGE_RETRIES = 3               # waits on a throttled call before recording it as failed
+JUDGE_CACHE_DIR = DATA_DIR / "judge_cache"
+ANSWER_CACHE_DIR = DATA_DIR / "answer_cache"
+
+
 # --- Logging ---------------------------------------------------------------
 # Where the detail goes when the user gets a sentence. Set LOG_FILE to None to
 # keep everything on stderr, which is what you want if the terminal is right

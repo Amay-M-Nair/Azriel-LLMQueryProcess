@@ -58,6 +58,14 @@ httpx==0.28.1
 
 # --- Evaluation --------------------------------------------------------------
 pydantic==2.14.4         # the golden-set schema (evaluation/golden.py); fastapi needs it too
+# RAGAS grades answers with DeepSeek on AWS Bedrock (evaluation/judge.py),
+# through Bedrock's OpenAI-compatible endpoint, hence the openai SDK. instructor
+# is pinned because pip otherwise backtracks to 1.3, which predates openai 2.
+# ragas imports langchain-community, which the pipeline itself avoids: it is
+# only ever loaded by the evaluation.
+ragas==0.4.4
+instructor==1.17.0
+openai==3.3.0
 
 # --- Service (Phase 2) -----------------------------------------------------
 fastapi==0.165.0

@@ -1,0 +1,53 @@
+{
+  "runs": [
+    {
+      "at": "2026-11-26T04:48:37+00:00",
+      "graded": 9,
+      "cache_hits": 0,
+      "judge_calls": 20,
+      "stopped": "the judge's daily quota ran out at aapl-employees-fy2026 / answer_correctness"
+    },
+    {
+      "at": "2026-11-26T05:54:45+00:00",
+      "graded": 15,
+      "cache_hits": 1,
+      "judge_calls": 24,
+      "stopped": "daily quota ran out for ragas-0.4.4/gemini-3.6-flash/gemini-embedding-001 (at aapl-employees-fy2026 / context_precision); ragas-0.4.4/gemini-3.5-flash/gemini-embedding-001 (at aapl-services-growth-fy2026 / answer_relevancy); ragas-0.4.4/gemini-3.7-flash/gemini-embedding-001 (at aapl-wearables-definition / answer_correctness); ragas-0.4.4/gemini-3.8-flash/gemini-embedding-001 (at aapl-sales-drivers-fy2026 / faithfulness)"
+    }
+  ],
+  "judge": {
+    "faithfulness": "ragas-0.4.4/gemini-3.8-flash/gemini-embedding-001",
+    "answer_relevancy": "ragas-0.4.4/gemini-3.5-flash/gemini-embedding-001",
+    "context_precision": "ragas-0.4.4/gemini-3.6-flash/gemini-embedding-001",
+    "context_recall": "ragas-0.4.4/gemini-3.5-flash-lite/gemini-embedding-001",
+    "answer_correctness": "ragas-0.4.4/gemini-3.7-flash/gemini-embedding-001"
+  },
+  "answers": "8d3eae6b9adb",
+  "scores": {
+    "aapl-net-sales-fy2026": {
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9982592854371429,
+      "context_precision": 0.19999999998,
+      "context_recall": 1.0,
+      "answer_correctness": 0.9321929314018427
+    },
+    "aapl-employees-fy2026": {
+      "faithfulness": 0.5,
+      "answer_relevancy": 0.9906911050306944,
+      "context_recall": 0.0,
+      "answer_correctness": 0.17453506123628204
+    },
+    "aapl-services-growth-fy2026": {
+      "faithfulness": null,
+      "context_recall": 0.0,
+      "answer_correctness": null
+    },
+    "aapl-wearables-definition": {
+      "faithfulness": null,
+      "context_recall": 1.0
+    },
+    "aapl-sales-drivers-fy2026": {
+      "context_recall": 0.25
+    }
+  }
+}
