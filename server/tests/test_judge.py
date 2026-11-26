@@ -178,6 +178,14 @@ def test_any_other_failure_is_recorded_and_tried_again_next_run(tmp_path):
     assert calls_of(retry_metrics) == 1 and retried.scores()["nwnd-sales"]["answer_relevancy"] == 0.8
 
 
+def test_each_judge_model_has_its_own_call_cache(tmp_path, monkeypatch):
+    """RAGAS keys a call by prompt alone, so a shared cache would replay another model's replies."""
+    first = judge.calls_cache_dir(tmp_path)
+    monkeypatch.setattr(config, "JUDGE_MODEL", "another.model")
+    assert judge.calls_cache_dir(tmp_path) != first
+    assert first.parent == judge.calls_cache_dir(tmp_path).parent == tmp_path / "calls"
+
+
 def test_the_judge_is_not_the_family_that_writes_the_answers():
     answer_models = {config.GROQ_MODEL, config.GROQ_CHEAP_MODEL, *config.GROQ_FALLBACK_MODELS}
     model = config.JUDGE_MODEL

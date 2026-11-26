@@ -68,6 +68,24 @@ Last checked against ROADMAP.md: 2026-11-27.
 - **Changing the judge re-grades everything:** grades are keyed by judge, so the 13 Gemini grades in the cache are not reused. Regrading the 5 check cases is about 70 calls, a few cents.
 - **Credits check:** AWS credits do not cover AWS Marketplace charges. After the first small run, the Billing console must show the charge under "Amazon Bedrock", covered by credits, before a full run. Billing can lag up to a day.
 
+### 1.6 — Done on Bedrock (2026-11-27)
+- **Done when met:** the 5 check cases were graded on all 5 metrics (25 grades, 60 judge calls, 348 s), then a rerun gave 25 from cache, 0 calls. `pytest` ticked 1.6.
+- **The ping:** `deepseek.v3.2` answered with 2 output tokens, so it does not think first on this endpoint. The default `AmazonBedrockLimitedAccess` key policy was enough for bedrock-mantle.
+- **Bug found and fixed: RAGAS keys its call cache by prompt alone, not by model.** The first DeepSeek run shared the call cache with the Gemini runs. Wherever a prompt matched, it got Gemini's old reply: 34 calls instead of 60, and grades that were part Gemini. Those 25 grades and that run were thrown away. The call cache is now one folder per judge model (`judge_cache/calls/{model}/`), with a test.
+- **Answer relevancy runs at `strictness=1`:** RAGAS's default of 3 sends the same prompt three times. The call cache answers the second and third from the first, so 3 would only look like an average of three. 1 says what happens. This leaves 12 calls per question, not 14: about 1,212 calls and $1.15 for a full run.
+- **Scores (a check, not an evaluation):**
+
+  | Case | Faithfulness | Answer relevancy | Context precision | Context recall | Answer correctness |
+  |---|---|---|---|---|---|
+  | net sales FY2026 | 1.00 | 1.00 | 0.20 | 1.00 | 0.88 |
+  | employees FY2026 | 0.50 | 1.00 | 0.00 | 0.00 | 0.41 |
+  | services growth FY2026 | 0.29 | 0.97 | 0.00 | 0.00 | 0.45 |
+  | wearables definition | 1.00 | 0.92 | 0.58 | 1.00 | 0.74 |
+  | sales drivers FY2026 | 1.00 | 0.75 | 0.00 | 0.25 | 0.38 |
+
+  Where retrieval missed (context recall 0), correctness is low. This is the same weakness 1.5 found: the right company, the wrong filing.
+- **Still to check before 1.8:** that the Billing console shows these calls under "Amazon Bedrock", paid by credits (it can lag a day).
+
 ### 1.6 — Facts that changed since ROADMAP.md was written
 - The 5 check cases now come from the approved `golden.jsonl` (the default), not from drafts with `--candidates`. They are the same 5 Apple cases, one per answerable type.
 

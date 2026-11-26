@@ -11,8 +11,9 @@ Five RAGAS metrics, scored per answer from 0 to 1:
 Grades are cached at two levels, both under data/judge_cache/:
   scores.jsonl   one line per (answer, metric, judge): a rerun of the same
                  answers costs no calls at all.
-  calls/         RAGAS's own cache of each judge call, so a metric interrupted
-                 halfway resumes without repeating calls.
+  calls/{model}/ RAGAS's own cache of each judge call, so a metric interrupted
+                 halfway resumes without repeating calls. One per judge model:
+                 RAGAS keys it by prompt alone.
 
 A throttled call is waited out. Any other failure is recorded and not cached,
 so the next run tries it again.
@@ -201,6 +202,16 @@ def judge_name() -> str:
     return f"ragas-{ragas.__version__}/{config.JUDGE_MODEL}/{config.JUDGE_EMBED_MODEL}"
 
 
+def calls_cache_dir(cache_dir: Path = config.JUDGE_CACHE_DIR) -> Path:
+    """RAGAS's call cache, one per judge model.
+
+    RAGAS keys a cached call by its prompt alone, not by the model. A shared
+    cache would hand a new judge the old judge's replies to the same prompts
+    (it did: the first DeepSeek run reused Gemini's), mixing two judges in one grade.
+    """
+    return Path(cache_dir) / "calls" / config.JUDGE_MODEL
+
+
 def bedrock_key() -> str:
     key = os.environ.get("AWS_BEARER_TOKEN_BEDROCK", "")
     if not key:
@@ -227,13 +238,16 @@ def make_judge(cache_dir: Path = config.JUDGE_CACHE_DIR) -> tuple[dict[str, Any]
 
     client = AsyncOpenAI(api_key=bedrock_key(), base_url=config.JUDGE_BASE_URL, max_retries=0,
                          http_client=httpx.AsyncClient(timeout=180, event_hooks={"response": [count]}))
-    cache = DiskCacheBackend(cache_dir=str(Path(cache_dir) / "calls"))
+    cache = DiskCacheBackend(cache_dir=str(calls_cache_dir(cache_dir)))
     llm = llm_factory(config.JUDGE_MODEL, provider="openai", client=client, cache=cache,
                       max_tokens=config.JUDGE_MAX_TOKENS)
     embeddings = HuggingFaceEmbeddings(model=config.JUDGE_EMBED_MODEL, cache=cache)
     metrics = {
         "faithfulness": Faithfulness(llm=llm),
-        "answer_relevancy": AnswerRelevancy(llm=llm, embeddings=embeddings),
+        # RAGAS's default strictness=3 sends one prompt three times and averages. The
+        # call cache answers the second and third from the first, so 3 would only
+        # pretend to average: 1 says what actually happens.
+        "answer_relevancy": AnswerRelevancy(llm=llm, embeddings=embeddings, strictness=1),
         "context_precision": ContextPrecisionWithReference(llm=llm, name="context_precision"),
         "context_recall": ContextRecall(llm=llm),
         "answer_correctness": AnswerCorrectness(llm=llm, embeddings=embeddings),

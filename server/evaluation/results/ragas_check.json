@@ -13,41 +13,61 @@
       "cache_hits": 1,
       "judge_calls": 24,
       "stopped": "daily quota ran out for ragas-0.4.4/gemini-3.6-flash/gemini-embedding-001 (at aapl-employees-fy2026 / context_precision); ragas-0.4.4/gemini-3.5-flash/gemini-embedding-001 (at aapl-services-growth-fy2026 / answer_relevancy); ragas-0.4.4/gemini-3.7-flash/gemini-embedding-001 (at aapl-wearables-definition / answer_correctness); ragas-0.4.4/gemini-3.8-flash/gemini-embedding-001 (at aapl-sales-drivers-fy2026 / faithfulness)"
+    },
+    {
+      "at": "2026-11-26T22:12:02+00:00",
+      "judge": "ragas-0.4.4/deepseek.v3.2/sentence-transformers/all-MiniLM-L6-v2",
+      "graded": 25,
+      "cache_hits": 0,
+      "judge_calls": 60,
+      "errors": 0
+    },
+    {
+      "at": "2026-11-26T22:12:32+00:00",
+      "judge": "ragas-0.4.4/deepseek.v3.2/sentence-transformers/all-MiniLM-L6-v2",
+      "graded": 25,
+      "cache_hits": 25,
+      "judge_calls": 0,
+      "errors": 0
     }
   ],
-  "judge": {
-    "faithfulness": "ragas-0.4.4/gemini-3.8-flash/gemini-embedding-001",
-    "answer_relevancy": "ragas-0.4.4/gemini-3.5-flash/gemini-embedding-001",
-    "context_precision": "ragas-0.4.4/gemini-3.6-flash/gemini-embedding-001",
-    "context_recall": "ragas-0.4.4/gemini-3.5-flash-lite/gemini-embedding-001",
-    "answer_correctness": "ragas-0.4.4/gemini-3.7-flash/gemini-embedding-001"
-  },
   "answers": "8d3eae6b9adb",
   "scores": {
     "aapl-net-sales-fy2026": {
       "faithfulness": 1.0,
-      "answer_relevancy": 0.9982592854371429,
+      "answer_relevancy": 0.9956374107493282,
       "context_precision": 0.19999999998,
       "context_recall": 1.0,
-      "answer_correctness": 0.9321929314018427
+      "answer_correctness": 0.8786234274071946
     },
     "aapl-employees-fy2026": {
       "faithfulness": 0.5,
-      "answer_relevancy": 0.9906911050306944,
+      "answer_relevancy": 0.9961625675489151,
+      "context_precision": 0.0,
       "context_recall": 0.0,
-      "answer_correctness": 0.17453506123628204
+      "answer_correctness": 0.407604104574125
     },
     "aapl-services-growth-fy2026": {
-      "faithfulness": null,
+      "faithfulness": 0.2857142857142857,
+      "answer_relevancy": 0.9699823634023277,
+      "context_precision": 0.0,
       "context_recall": 0.0,
-      "answer_correctness": null
+      "answer_correctness": 0.4538320851272175
     },
     "aapl-wearables-definition": {
-      "faithfulness": null,
-      "context_recall": 1.0
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9220032196873225,
+      "context_precision": 0.5833333333041666,
+      "context_recall": 1.0,
+      "answer_correctness": 0.7423001986761062
     },
     "aapl-sales-drivers-fy2026": {
-      "context_recall": 0.25
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.7484853480955432,
+      "context_precision": 0.0,
+      "context_recall": 0.25,
+      "answer_correctness": 0.38374369690334553
     }
-  }
+  },
+  "judge": "ragas-0.4.4/deepseek.v3.2/sentence-transformers/all-MiniLM-L6-v2"
 }

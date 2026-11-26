@@ -31,7 +31,7 @@ snapshot. Each upgrade is measured against a baseline before it counts.
 | Phase | Done | Next |
 |---|---|---|
 | 0 Foundations | 7/7 | complete |
-| 1 Data and baseline | 5/9 | 1.6 RAGAS |
+| 1 Data and baseline | 6/9 | 1.7 Cost and latency accounting |
 | 2 Database and API | 0/7 | 2.1 Neon schema |
 | 3 Structured outputs | 0/3 | 3.1 Schemas |
 | 4 Parsing and hybrid retrieval | 0/6 | 4.1 Layout-aware 10-K and 10-Q parsing |
@@ -169,7 +169,7 @@ Temperature starts at OpenAI's recommended 1.0 for gpt-oss. 1.0 vs 0.3 is run as
   - Unanswerable questions have no retrieval score; declining is measured in 5.4.
   - Each metric is a mean over questions with a 95% percentile-bootstrap interval. Two configurations are compared with a paired bootstrap of their per-question difference.
   - *Done when:* unit tests against hand-worked examples pass.
-- [ ] **1.6 RAGAS**
+- [x] **1.6 RAGAS**
   - Faithfulness, answer relevancy, context precision and recall, answer correctness (`evaluation/judge.py`).
   - The judge is Gemini; results are cached.
     - Each metric has its own fixed model (`JUDGE_MODELS` in `utils/config.py`), never a fall-through list: a metric graded by two models would mix two scales. Five models means five free-tier quotas. Changing one metric's model re-grades that metric only.
