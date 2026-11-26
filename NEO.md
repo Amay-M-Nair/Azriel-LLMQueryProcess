@@ -94,6 +94,42 @@ Last checked against ROADMAP.md: 2026-11-27.
 - **The judge is lenient on hedged answers (found by hand, 2026-11-27).** The services-growth answer said the passages lacked the figure, then invented $35B → $38B; the filing says $109B → $123B. DeepSeek counted the three hedge sentences ("the excerpts do not include…") as true positives against the reference, so facts-only correctness still came to 0.46 (3 / (3 + ½·7)). The wrong figures were all caught as false positives. This is the case for P3 and P4.
 - **Money:** about $0.10 spent so far (the ping and two 5-case runs, ~120K input tokens). A full 1.8 run is about $1.10 (89 answerable cases × 12 calls).
 
+### 1.8 — The baseline (2026-11-27)
+- **Run by** `python -m evaluation.evaluate` (from `server/`), not `run_eval`: `run_eval` still scores the old synthetic corpus. Results in `evaluation/results/baseline.json`, at commit 05d823f on snapshot v1.
+- **Baseline (101 cases; RAGAS and retrieval on the 89 answerable; 95% bootstrap intervals):**
+
+  | Metric | Value | 95% CI |
+  |---|---|---|
+  | Recall@5 (what the answer model saw) | 0.169 | 0.096–0.247 |
+  | Recall@10 | 0.231 | 0.149–0.319 |
+  | MRR | 0.137 | 0.079–0.204 |
+  | nDCG@10 | 0.148 | 0.091–0.211 |
+  | Faithfulness (n = 86) | 0.749 | 0.679–0.814 |
+  | Answer relevancy | 0.679 | 0.593–0.758 |
+  | Context precision | 0.186 | 0.121–0.259 |
+  | Context recall | 0.302 | 0.213–0.399 |
+  | Answer correctness (facts only) | 0.435 | 0.380–0.490 |
+  | $/query (Groq) | $0.00048 | — |
+  | p50 / p95 latency | 10.2 s / 16.2 s | — |
+
+- **By question type** (recall@5 · recall@10 · faithfulness · correctness · context recall):
+  - cross-period (15): 0.27 · 0.27 · 0.87 · 0.47 · 0.27
+  - definition (10): 0.20 · 0.40 · 0.80 · 0.64 · 0.68
+  - follow-up (12): 0.25 · 0.33 · 0.81 · 0.39 · 0.29
+  - summary (10): 0.00 · 0.06 · 0.55 · 0.30 · 0.05
+  - table lookup (22): 0.09 · 0.14 · 0.78 · 0.41 · 0.23
+  - text lookup (20): 0.20 · 0.25 · 0.66 · 0.43 · 0.36
+- **What it says:** retrieval is the bottleneck, as 1.5 found. Tables (0.09) and summaries (0.00) are worst: the minimal loader's tables (4.2) and multi-passage summaries. Definitions do best, being worded like the filing. Faithfulness is far higher than correctness: the answers mostly stay with their passages, but the passages are often the wrong ones.
+- **Routes:** 96 retrieval, 5 clarify (follow-ups the classifier could not place; see 1.7). 9 follow-ups were rewritten by the model.
+- **Cost:** answers $0.048 on Groq (2,287 input tokens a question, 702 of them cached; 409 output, 311 of them reasoning). The judge made about 1,000 calls, about $1 of the Bedrock credits by the 1.6 estimate; Billing still to confirm.
+- **How the run was kept honest** (each a fix made during this run):
+  - Warm-up before timing: the first retrieval takes about 16 s.
+  - No model fallback: a rate-limited 120b quietly answered one case on 20b; that answer was deleted and remade.
+  - Groq's rate limit (4 waits) is waited out, and an answer whose classifier or rewriter call quietly failed is remade (none were).
+  - No passages retrieved (3 answerable follow-ups routed to clarify): context precision and recall are 0, and faithfulness does not apply (hence n = 86), instead of judge errors.
+  - A case counts as judged only if no metric errored; 2 passing judge errors were retried.
+- **Dates are UTC** in results files, so this run reads 2026-11-26.
+
 ### 1.7 — Cost and latency accounting (2026-11-27)
 - **What is recorded:** every model call's stage, model and tokens (prompt, cached, completion, reasoning) go into `QueryTrace.usage`, through a per-question metered copy of the provider (`Provider.metered`), so a shared provider never mixes two questions' costs. `trace.cost` prices them from `config.PRICES`. `trace.total_seconds` now includes the streamed answer (the `answer` stage), which was not timed before.
 - **Prices** (`config.PRICES`, checked 2026-11-27 on the console.groq.com model pages, USD per 1M tokens): gpt-oss-120b $0.15 in / $0.075 cached / $0.60 out; gpt-oss-20b $0.075 / $0.037 / $0.30. Reasoning tokens are part of completion_tokens and billed as output.

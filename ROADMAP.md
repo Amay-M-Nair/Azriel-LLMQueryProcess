@@ -31,7 +31,7 @@ snapshot. Each upgrade is measured against a baseline before it counts.
 | Phase | Done | Next |
 |---|---|---|
 | 0 Foundations | 7/7 | complete |
-| 1 Data and baseline | 7/9 | 1.8 Baseline run |
+| 1 Data and baseline | 8/9 | 1.9 Regression harness |
 | 2 Database and API | 0/7 | 2.1 Neon schema |
 | 3 Structured outputs | 0/3 | 3.1 Schemas |
 | 4 Parsing and hybrid retrieval | 0/6 | 4.1 Layout-aware 10-K and 10-Q parsing |
@@ -44,11 +44,9 @@ snapshot. Each upgrade is measured against a baseline before it counts.
 
 ## Results
 <!-- results:start -->
-No runs yet. The baseline (1.8) comes first; every later subphase adds a row, including rows where nothing improved.
-
 | Configuration | Recall@5 | MRR | nDCG@10 | Faithfulness | Unsupported claims | Correct refusals | $/query | p95 latency | Run |
 |---|---|---|---|---|---|---|---|---|---|
-| Baseline (current pipeline) | | | | | | | | | |
+| Baseline (current pipeline) | 0.169 [0.096–0.247] | 0.137 [0.079–0.204] | 0.148 [0.091–0.211] | 0.749 [0.679–0.814] |  |  | $0.0005 | 16.2s | 2026-11-26 · 05d823f · v1 |
 <!-- results:end -->
 
 ## Model settings per stage
@@ -183,7 +181,7 @@ Temperature starts at OpenAI's recommended 1.0 for gpt-oss. 1.0 vs 0.3 is run as
 - [x] **1.7 Cost and latency accounting**
   - Tokens, $ (from a price table), and p50/p95 latency recorded in `QueryTrace`.
   - *Done when:* every eval result carries them.
-- [ ] **1.8 Baseline run**
+- [x] **1.8 Baseline run**
   - The current pipeline over the snapshot.
   - *Done when:* the Baseline row is filled, with confidence intervals.
 - [ ] **1.9 Regression harness**

@@ -1,0 +1,1183 @@
+{
+  "configuration": "Baseline (current pipeline)",
+  "order": 0,
+  "date": "2026-11-26",
+  "timestamp": 1795735684,
+  "commit": "05d823f992aada9719b270926a2a8dd6cda50128",
+  "uncommitted_changes": false,
+  "snapshot": "v1",
+  "answers": "baa8cc655e3d",
+  "judge": "ragas-0.4.4/deepseek.v3.2/sentence-transformers/all-MiniLM-L6-v2",
+  "questions": {
+    "all": 101,
+    "answerable": 89,
+    "judged": 89
+  },
+  "judge_errors": [],
+  "metrics": {
+    "recall_at_5": {
+      "value": 0.16853932584269662,
+      "ci": [
+        0.09550561797752809,
+        0.24719101123595505
+      ],
+      "n": 89
+    },
+    "recall_at_10": {
+      "value": 0.2314606741573034,
+      "ci": [
+        0.149438202247191,
+        0.3191011235955056
+      ],
+      "n": 89
+    },
+    "mrr": {
+      "value": 0.1370474406991261,
+      "ci": [
+        0.07899422596754058,
+        0.20368601747815224
+      ],
+      "n": 89
+    },
+    "ndcg_at_10": {
+      "value": 0.1481298258891492,
+      "ci": [
+        0.09066540721834489,
+        0.21135046441782523
+      ],
+      "n": 89
+    },
+    "faithfulness": {
+      "value": 0.7486184728404289,
+      "ci": [
+        0.678757371077395,
+        0.8142638970127002
+      ],
+      "n": 86
+    },
+    "answer_relevancy": {
+      "value": 0.6792677679659421,
+      "ci": [
+        0.5930923117604542,
+        0.758388379052034
+      ],
+      "n": 89
+    },
+    "context_precision": {
+      "value": 0.18601747814013525,
+      "ci": [
+        0.12066011235057639,
+        0.25946239074518634
+      ],
+      "n": 89
+    },
+    "context_recall": {
+      "value": 0.30243445692883897,
+      "ci": [
+        0.21348314606741572,
+        0.398876404494382
+      ],
+      "n": 89
+    },
+    "answer_correctness": {
+      "value": 0.4350207414010088,
+      "ci": [
+        0.3803244082252734,
+        0.4904337790545654
+      ],
+      "n": 89
+    },
+    "cost_per_query": 0.00047619537623762385,
+    "p50_seconds": 10.23399999999674,
+    "p95_seconds": 16.187999999994645
+  },
+  "cost": {
+    "questions": 101,
+    "cost_per_query": 0.00047619537623762385,
+    "cost_total": 0.04809573300000001,
+    "cost_unknown": 0,
+    "tokens_per_query": {
+      "prompt_tokens": 2287.4158415841584,
+      "cached_tokens": 702.0990099009902,
+      "completion_tokens": 409.15841584158414,
+      "reasoning_tokens": 310.71287128712873
+    },
+    "p50_seconds": 10.23399999999674,
+    "p95_seconds": 16.187999999994645,
+    "prices_checked": "2026-11-27"
+  },
+  "routes": {
+    "retrieval": 96,
+    "clarify": 5
+  },
+  "answer_models": {
+    "openai/gpt-oss-120b": 96
+  },
+  "by_type": {
+    "cross_period": {
+      "n": 15,
+      "recall_at_5": 0.26666666666666666,
+      "recall_at_10": 0.26666666666666666,
+      "reciprocal_rank": 0.19444444444444445,
+      "ndcg_at_10": 0.19002648981477202,
+      "faithfulness": 0.87,
+      "answer_relevancy": 0.6334796140039245,
+      "context_precision": 0.10222222221199999,
+      "context_recall": 0.26666666666666666,
+      "answer_correctness": 0.4678403078403078
+    },
+    "definition": {
+      "n": 10,
+      "recall_at_5": 0.2,
+      "recall_at_10": 0.4,
+      "reciprocal_rank": 0.22777777777777777,
+      "ndcg_at_10": 0.2142465737888326,
+      "faithfulness": 0.7978021978021979,
+      "answer_relevancy": 0.8397291224817568,
+      "context_precision": 0.5158333333169584,
+      "context_recall": 0.675,
+      "answer_correctness": 0.6449052599052598
+    },
+    "follow_up": {
+      "n": 12,
+      "recall_at_5": 0.25,
+      "recall_at_10": 0.3333333333333333,
+      "reciprocal_rank": 0.21875,
+      "ndcg_at_10": 0.24553288586309885,
+      "faithfulness": 0.8136123136123136,
+      "answer_relevancy": 0.4283723329300508,
+      "context_precision": 0.208333333325,
+      "context_recall": 0.2916666666666667,
+      "answer_correctness": 0.39090568301094614
+    },
+    "summary": {
+      "n": 10,
+      "recall_at_5": 0.0,
+      "recall_at_10": 0.06000000000000001,
+      "reciprocal_rank": 0.02361111111111111,
+      "ndcg_at_10": 0.020909052749017543,
+      "faithfulness": 0.5493751101839337,
+      "answer_relevancy": 0.6695996913153749,
+      "context_precision": 0.0,
+      "context_recall": 0.05,
+      "answer_correctness": 0.298204784462849
+    },
+    "table_lookup": {
+      "n": 22,
+      "recall_at_5": 0.09090909090909091,
+      "recall_at_10": 0.13636363636363635,
+      "reciprocal_rank": 0.034848484848484844,
+      "ndcg_at_10": 0.05859385574172218,
+      "faithfulness": 0.7840909090909091,
+      "answer_relevancy": 0.6690549977436514,
+      "context_precision": 0.086363636355,
+      "context_recall": 0.22727272727272727,
+      "answer_correctness": 0.4054473304473305
+    },
+    "text_lookup": {
+      "n": 20,
+      "recall_at_5": 0.2,
+      "recall_at_10": 0.25,
+      "reciprocal_rank": 0.16875,
+      "ndcg_at_10": 0.18730707174295608,
+      "faithfulness": 0.664345238095238,
+      "answer_relevancy": 0.7999835527708863,
+      "context_precision": 0.2731944444206227,
+      "context_recall": 0.3583333333333333,
+      "answer_correctness": 0.43287157287157296
+    }
+  },
+  "per_case": {
+    "aapl-net-sales-fy2026": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg_at_10": 0.0,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9956374107493282,
+      "context_precision": 0.19999999998,
+      "context_recall": 1.0,
+      "answer_correctness": 0.6666666666666666
+    },
+    "aapl-net-income-fy2026": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg_at_10": 0.0,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.0,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.5714285714285715
+    },
+    "aapl-iphone-q3-2026": {
+      "recall_at_5": 1.0,
+      "recall_at_10": 1.0,
+      "reciprocal_rank": 0.3333333333333333,
+      "ndcg_at_10": 0.5,
+      "faithfulness": 0.0,
+      "answer_relevancy": 0.997759651068637,
+      "context_precision": 0.3333333333,
+      "context_recall": 1.0,
+      "answer_correctness": 0.5
+    },
+    "aapl-net-sales-q1-2025": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg_at_10": 0.0,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9999999999999999,
+      "context_precision": 0.19999999998,
+      "context_recall": 1.0,
+      "answer_correctness": 0.5
+    },
+    "aapl-employees-fy2026": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg_at_10": 0.0,
+      "faithfulness": 0.3333333333333333,
+      "answer_relevancy": 0.9961625675489151,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.5714285714285715
+    },
+    "aapl-buybacks-9m-2026": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg_at_10": 0.0,
+      "faithfulness": 0.6666666666666666,
+      "answer_relevancy": 0.8718369144357963,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.5
+    },
+    "aapl-services-growth-fy2026": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg_at_10": 0.0,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.919732442896179,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.4444444444444445
+    },
+    "aapl-q4-net-sales-fy2026": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg_at_10": 0.0,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.0,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.33333333333333337
+    },
+    "aapl-iphone-followup-fy2025": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg_at_10": 0.0,
+      "faithfulness": null,
+      "answer_relevancy": 0.0,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.6666666666666666
+    },
+    "aapl-buybacks-followup-q3-2026": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg_at_10": 0.0,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.0,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.5
+    },
+    "aapl-wearables-definition": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 1.0,
+      "reciprocal_rank": 0.1111111111111111,
+      "ndcg_at_10": 0.3010299956639812,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9220032196873225,
+      "context_precision": 0.5833333333041666,
+      "context_recall": 1.0,
+      "answer_correctness": 0.6666666666666665
+    },
+    "aapl-fiscal-year-definition": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg_at_10": 0.0,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.8361304245250946,
+      "context_precision": 0.99999999998,
+      "context_recall": 1.0,
+      "answer_correctness": 0.888888888888889
+    },
+    "aapl-sales-drivers-fy2026": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg_at_10": 0.0,
+      "faithfulness": 0.9230769230769231,
+      "answer_relevancy": 0.7442552656188858,
+      "context_precision": 0.0,
+      "context_recall": 0.25,
+      "answer_correctness": 0.1904761904761905
+    },
+    "aapl-vision-pro-units-fy2026": {},
+    "aapl-revenue-forecast-fy2027": {},
+    "msft-revenue-fy2026": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg_at_10": 0.0,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.0,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.0
+    },
+    "msft-net-income-fy2026": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg_at_10": 0.0,
+      "faithfulness": 0.5,
+      "answer_relevancy": 0.9950790189472333,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.3333333333333333
+    },
+    "msft-revenue-q3-2026": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg_at_10": 0.0,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9779078093149348,
+      "context_precision": 0.3333333333,
+      "context_recall": 1.0,
+      "answer_correctness": 0.6666666666666666
+    },
+    "msft-us-revenue-fy2026": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg_at_10": 0.0,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.0,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.5
+    },
+    "msft-employees-fy2026": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg_at_10": 0.0,
+      "faithfulness": 0.3333333333333333,
+      "answer_relevancy": 0.9460474389417916,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.3333333333333333
+    },
+    "msft-azure-growth-fy2026": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg_at_10": 0.0,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9452445328239293,
+      "context_precision": 0.9999999999,
+      "context_recall": 0.5,
+      "answer_correctness": 0.4
+    },
+    "msft-openai-net-income-fy2026": {
+      "recall_at_5": 1.0,
+      "recall_at_10": 1.0,
+      "reciprocal_rank": 0.25,
+      "ndcg_at_10": 0.43067655807339306,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9552107988968709,
+      "context_precision": 0.32499999998375,
+      "context_recall": 1.0,
+      "answer_correctness": 0.5714285714285715
+    },
+    "msft-cloud-growth-fy2026": {
+      "recall_at_5": 0.5,
+      "recall_at_10": 0.5,
+      "reciprocal_rank": 1.0,
+      "ndcg_at_10": 0.6131471927654584,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9629449451832026,
+      "context_precision": 0.9999999999,
+      "context_recall": 1.0,
+      "answer_correctness": 0.6666666666666666
+    },
+    "msft-cloud-quarters-fy2026": {
+      "recall_at_5": 1.0,
+      "recall_at_10": 1.0,
+      "reciprocal_rank": 1.0,
+      "ndcg_at_10": 1.0,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9450016350038553,
+      "context_precision": 0.0,
+      "context_recall": 1.0,
+      "answer_correctness": 0.7499999999999999
+    },
+    "msft-q4-revenue-fy2026": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg_at_10": 0.0,
+      "faithfulness": 0.75,
+      "answer_relevancy": 0.0,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.3636363636363636
+    },
+    "msft-net-income-followup-fy2026": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg_at_10": 0.0,
+      "faithfulness": 0.5,
+      "answer_relevancy": 0.8068127964470375,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.4
+    },
+    "msft-azure-followup-fy2026": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg_at_10": 0.0,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.7839599394173579,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.19999999999999998
+    },
+    "msft-cloud-definition": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg_at_10": 0.0,
+      "faithfulness": 0.6923076923076923,
+      "answer_relevancy": 0.877524397254904,
+      "context_precision": 0.32499999998375,
+      "context_recall": 0.75,
+      "answer_correctness": 0.45454545454545453
+    },
+    "msft-intelligent-cloud-summary-fy2026": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg_at_10": 0.0,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.8501226145343463,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.3076923076923077
+    },
+    "msft-brazil-revenue-fy2026": {},
+    "jpm-net-revenue-fy2025": {
+      "recall_at_5": 1.0,
+      "recall_at_10": 1.0,
+      "reciprocal_rank": 0.3333333333333333,
+      "ndcg_at_10": 0.5,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9999999999999998,
+      "context_precision": 0.3333333333,
+      "context_recall": 1.0,
+      "answer_correctness": 0.5
+    },
+    "jpm-segment-revenue-fy2025": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg_at_10": 0.0,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9085214480405958,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.22222222222222224
+    },
+    "jpm-cet1-fy2025": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg_at_10": 0.0,
+      "faithfulness": 0.5,
+      "answer_relevancy": 1.0,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.4
+    },
+    "jpm-net-income-q3-2025": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg_at_10": 0.0,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.0,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.5
+    },
+    "jpm-employees-fy2025": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg_at_10": 0.0,
+      "faithfulness": 0.4,
+      "answer_relevancy": 0.9275467722065631,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.5454545454545454
+    },
+    "jpm-net-income-fy2025-text": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg_at_10": 0.0,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.0,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.0
+    },
+    "jpm-revenue-followup-fy2024": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg_at_10": 0.0,
+      "faithfulness": 0.6666666666666666,
+      "answer_relevancy": 0.8354884254728444,
+      "context_precision": 0.0,
+      "context_recall": 0.5,
+      "answer_correctness": 0.3333333333333333
+    },
+    "jpm-expense-followup-fy2025": {
+      "recall_at_5": 1.0,
+      "recall_at_10": 1.0,
+      "reciprocal_rank": 1.0,
+      "ndcg_at_10": 1.0,
+      "faithfulness": 0.9285714285714286,
+      "answer_relevancy": 0.6074460292618478,
+      "context_precision": 0.999999999975,
+      "context_recall": 1.0,
+      "answer_correctness": 0.7692307692307692
+    },
+    "jpm-overhead-ratio-definition": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg_at_10": 0.0,
+      "faithfulness": 0.2857142857142857,
+      "answer_relevancy": 1.0,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.6
+    },
+    "jpm-rotce-definition": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg_at_10": 0.0,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.4489061881947535,
+      "context_precision": 0.249999999975,
+      "context_recall": 1.0,
+      "answer_correctness": 0.5
+    },
+    "jpm-ceo-pay-fy2025": {},
+    "jpm-net-income-fy2026": {},
+    "jpm-results-summary-fy2025": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg_at_10": 0.0,
+      "faithfulness": 0.21428571428571427,
+      "answer_relevancy": 0.8948522887845549,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.07142857142857142
+    },
+    "jpm-net-income-change-fy2025": {
+      "recall_at_5": 1.0,
+      "recall_at_10": 1.0,
+      "reciprocal_rank": 0.3333333333333333,
+      "ndcg_at_10": 0.5,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9827930309090477,
+      "context_precision": 0.3333333333,
+      "context_recall": 1.0,
+      "answer_correctness": 0.6666666666666666
+    },
+    "jpm-q4-net-income-fy2025": {
+      "recall_at_5": 0.5,
+      "recall_at_10": 0.5,
+      "reciprocal_rank": 0.3333333333333333,
+      "ndcg_at_10": 0.3065735963827292,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.0,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.28571428571428575
+    },
+    "jnj-sales-fy2025": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg_at_10": 0.0,
+      "faithfulness": 0.5,
+      "answer_relevancy": 0.9855875572729951,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.28571428571428575
+    },
+    "jnj-darzalex-fy2025": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg_at_10": 0.0,
+      "faithfulness": 0.5,
+      "answer_relevancy": 0.9896457224069221,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.25
+    },
+    "jnj-net-earnings-q3-2025": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg_at_10": 0.0,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.0,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.5714285714285715
+    },
+    "jnj-employees-fy2025": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg_at_10": 0.0,
+      "faithfulness": 0.0,
+      "answer_relevancy": 0.951921174915795,
+      "context_precision": 0.249999999975,
+      "context_recall": 1.0,
+      "answer_correctness": 1.0
+    },
+    "jnj-us-sales-fy2025": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg_at_10": 0.0,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.0,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.0
+    },
+    "jnj-stelara-decline-fy2025": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg_at_10": 0.0,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.0,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.25
+    },
+    "jnj-q4-sales-fy2025": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg_at_10": 0.0,
+      "faithfulness": 0.5,
+      "answer_relevancy": 0.9695787857383795,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.25
+    },
+    "jnj-q3-sales-yoy-2025": {
+      "recall_at_5": 1.0,
+      "recall_at_10": 1.0,
+      "reciprocal_rank": 0.25,
+      "ndcg_at_10": 0.43067655807339306,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.929381427094182,
+      "context_precision": 0.19999999998,
+      "context_recall": 1.0,
+      "answer_correctness": 0.8571428571428571
+    },
+    "jnj-net-earnings-followup-fy2025": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg_at_10": 0.0,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.0,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.5
+    },
+    "jnj-oncology-followup-fy2025": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg_at_10": 0.0,
+      "faithfulness": null,
+      "answer_relevancy": 0.0,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.0
+    },
+    "jnj-fiscal-year-definition": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg_at_10": 0.0,
+      "faithfulness": 0.8,
+      "answer_relevancy": 0.8525234988352244,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.4615384615384615
+    },
+    "jnj-segments-summary-fy2025": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg_at_10": 0.0,
+      "faithfulness": 0.058823529411764705,
+      "answer_relevancy": 0.7745055361521913,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.7999999999999999
+    },
+    "jnj-ceo-pay-fy2025": {},
+    "jnj-stelara-share-fy2025": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg_at_10": 0.0,
+      "faithfulness": 0.625,
+      "answer_relevancy": 0.9465323407792465,
+      "context_precision": 0.49999999995,
+      "context_recall": 0.3333333333333333,
+      "answer_correctness": 0.28571428571428575
+    },
+    "wmt-revenue-fy2026": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg_at_10": 0.0,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9241856888813375,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.8571428571428571
+    },
+    "wmt-net-income-fy2026": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg_at_10": 0.0,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9755996551428016,
+      "context_precision": 0.49999999995,
+      "context_recall": 0.0,
+      "answer_correctness": 0.5
+    },
+    "wmt-net-income-q3-2026": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg_at_10": 0.0,
+      "faithfulness": 0.5,
+      "answer_relevancy": 0.9984005207152141,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.3333333333333333
+    },
+    "wmt-associates-fy2026": {
+      "recall_at_5": 1.0,
+      "recall_at_10": 1.0,
+      "reciprocal_rank": 1.0,
+      "ndcg_at_10": 1.0,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9350096493389416,
+      "context_precision": 0.9999999999,
+      "context_recall": 1.0,
+      "answer_correctness": 0.8
+    },
+    "wmt-sams-club-fy2026": {
+      "recall_at_5": 1.0,
+      "recall_at_10": 1.0,
+      "reciprocal_rank": 1.0,
+      "ndcg_at_10": 1.0,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9980959476053152,
+      "context_precision": 0.9999999999,
+      "context_recall": 1.0,
+      "answer_correctness": 0.5714285714285715
+    },
+    "wmt-international-share-fy2026": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg_at_10": 0.0,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9138281629487637,
+      "context_precision": 0.3333333333,
+      "context_recall": 1.0,
+      "answer_correctness": 0.6666666666666666
+    },
+    "wmt-revenue-growth-fy2026": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg_at_10": 0.0,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9127534008945685,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.26666666666666666
+    },
+    "wmt-comp-sales-followup-fy2026": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg_at_10": 0.0,
+      "faithfulness": null,
+      "answer_relevancy": 0.0,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.0
+    },
+    "wmt-international-followup-fy2026": {
+      "recall_at_5": 1.0,
+      "recall_at_10": 1.0,
+      "reciprocal_rank": 0.5,
+      "ndcg_at_10": 0.6309297535714575,
+      "faithfulness": 0.5,
+      "answer_relevancy": 0.6946321829224855,
+      "context_precision": 0.49999999995,
+      "context_recall": 1.0,
+      "answer_correctness": 0.6666666666666666
+    },
+    "wmt-comparable-sales-definition": {
+      "recall_at_5": 1.0,
+      "recall_at_10": 1.0,
+      "reciprocal_rank": 1.0,
+      "ndcg_at_10": 1.0,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9999999999999998,
+      "context_precision": 0.99999999998,
+      "context_recall": 1.0,
+      "answer_correctness": 0.8571428571428571
+    },
+    "wmt-segments-summary-fy2026": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 0.2,
+      "reciprocal_rank": 0.1111111111111111,
+      "ndcg_at_10": 0.10209739512291163,
+      "faithfulness": 0.8,
+      "answer_relevancy": 0.0,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.0
+    },
+    "wmt-ad-profit-fy2026": {},
+    "wmt-q4-revenue-fy2026": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg_at_10": 0.0,
+      "faithfulness": 0.5,
+      "answer_relevancy": 0.9654446452360269,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.25
+    },
+    "cvx-net-income-fy2025": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg_at_10": 0.0,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.0,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.14285714285714288
+    },
+    "cvx-employees-fy2025": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg_at_10": 0.0,
+      "faithfulness": 0.5,
+      "answer_relevancy": 0.9740319838818636,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.3333333333333333
+    },
+    "cvx-production-fy2025": {
+      "recall_at_5": 1.0,
+      "recall_at_10": 1.0,
+      "reciprocal_rank": 1.0,
+      "ndcg_at_10": 1.0,
+      "faithfulness": 0.42857142857142855,
+      "answer_relevancy": 0.9659907848627566,
+      "context_precision": 0.8055555555287036,
+      "context_recall": 1.0,
+      "answer_correctness": 1.0
+    },
+    "cvx-production-outlook-2026": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg_at_10": 0.0,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.7843447764004987,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.0
+    },
+    "cvx-dividend-fy2025": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg_at_10": 0.0,
+      "faithfulness": 0.5,
+      "answer_relevancy": 0.9545586775778114,
+      "context_precision": 0.0,
+      "context_recall": 0.3333333333333333,
+      "answer_correctness": 0.18181818181818182
+    },
+    "cvx-net-income-change-fy2025": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg_at_10": 0.0,
+      "faithfulness": 0.5,
+      "answer_relevancy": 0.9354406645094602,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.8
+    },
+    "cvx-q4-net-income-fy2025": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg_at_10": 0.0,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.0,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.33333333333333337
+    },
+    "cvx-revenue-followup-fy2025": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 1.0,
+      "reciprocal_rank": 0.125,
+      "ndcg_at_10": 0.31546487678572877,
+      "faithfulness": 0.7272727272727273,
+      "answer_relevancy": 0.5948707737153128,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.2105263157894737
+    },
+    "cvx-opec-followup-fy2025": {
+      "recall_at_5": 1.0,
+      "recall_at_10": 1.0,
+      "reciprocal_rank": 1.0,
+      "ndcg_at_10": 1.0,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.8172578479237225,
+      "context_precision": 0.999999999975,
+      "context_recall": 1.0,
+      "answer_correctness": 0.4444444444444445
+    },
+    "cvx-oil-equivalent-definition": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 1.0,
+      "reciprocal_rank": 0.16666666666666666,
+      "ndcg_at_10": 0.3562071871080222,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.870659670527869,
+      "context_precision": 0.99999999998,
+      "context_recall": 1.0,
+      "answer_correctness": 1.0
+    },
+    "cvx-mboed-definition": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg_at_10": 0.0,
+      "faithfulness": 0.2,
+      "answer_relevancy": 0.7222983952260973,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.75
+    },
+    "cvx-year-summary-fy2025": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg_at_10": 0.0,
+      "faithfulness": 0.36363636363636365,
+      "answer_relevancy": 0.7445642865248581,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.16
+    },
+    "cvx-net-income-forecast-2026": {},
+    "cvx-revenue-q3-2025": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 1.0,
+      "reciprocal_rank": 0.1,
+      "ndcg_at_10": 0.2890648263178879,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.0,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.0
+    },
+    "wmt-china-q3-2026": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg_at_10": 0.0,
+      "faithfulness": 0.25,
+      "answer_relevancy": 0.9968534839384686,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.28571428571428575
+    },
+    "wmt-us-ecommerce-q3-2026": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 1.0,
+      "reciprocal_rank": 0.125,
+      "ndcg_at_10": 0.31546487678572877,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.0,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.4444444444444445
+    },
+    "wmt-comp-sales-q3-2026": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg_at_10": 0.0,
+      "faithfulness": 0.0,
+      "answer_relevancy": 0.9694883177484044,
+      "context_precision": 0.249999999975,
+      "context_recall": 0.0,
+      "answer_correctness": 0.5
+    },
+    "msft-azure-q3-2026": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg_at_10": 0.0,
+      "faithfulness": 0.5,
+      "answer_relevancy": 0.9378521983863275,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.28571428571428575
+    },
+    "jnj-nine-month-sales-2025": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg_at_10": 0.0,
+      "faithfulness": 0.5,
+      "answer_relevancy": 0.9999999999999999,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.0
+    },
+    "wmt-grocery-q3-2026": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg_at_10": 0.0,
+      "faithfulness": 0.8,
+      "answer_relevancy": 0.9791232325939653,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.5
+    },
+    "jpm-q3-summary-2025": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg_at_10": 0.0,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.0,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.0
+    },
+    "aapl-q3-summary-2026": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 0.4,
+      "reciprocal_rank": 0.125,
+      "ndcg_at_10": 0.10699313236726378,
+      "faithfulness": 0.0625,
+      "answer_relevancy": 0.9283955665227636,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.3225806451612903
+    },
+    "jnj-q3-segments-summary-2025": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg_at_10": 0.0,
+      "faithfulness": 0.07142857142857142,
+      "answer_relevancy": 0.9295541765072383,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_correctness": 0.27272727272727276
+    },
+    "wmt-q3-summary-2026": {
+      "recall_at_5": 0.0,
+      "recall_at_10": 0.0,
+      "reciprocal_rank": 0.0,
+      "ndcg_at_10": 0.0,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.8297471785089099,
+      "context_precision": 0.0,
+      "context_recall": 0.25,
+      "answer_correctness": 0.8571428571428571
+    },
+    "aapl-services-definition": {
+      "recall_at_5": 1.0,
+      "recall_at_10": 1.0,
+      "reciprocal_rank": 1.0,
+      "ndcg_at_10": 0.48522855511632257,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.8672454305663035,
+      "context_precision": 0.9999999999666667,
+      "context_recall": 1.0,
+      "answer_correctness": 0.2702702702702703
+    },
+    "aapl-smartphone-share-fy2026": {},
+    "msft-xbox-units-fy2026": {},
+    "cvx-capex-2027": {},
+    "jnj-carvykti-patients-fy2025": {}
+  }
+}
