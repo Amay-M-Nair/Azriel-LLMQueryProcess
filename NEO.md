@@ -94,6 +94,15 @@ Last checked against ROADMAP.md: 2026-11-27.
 - **The judge is lenient on hedged answers (found by hand, 2026-11-27).** The services-growth answer said the passages lacked the figure, then invented $35B → $38B; the filing says $109B → $123B. DeepSeek counted the three hedge sentences ("the excerpts do not include…") as true positives against the reference, so facts-only correctness still came to 0.46 (3 / (3 + ½·7)). The wrong figures were all caught as false positives. This is the case for P3 and P4.
 - **Money:** about $0.10 spent so far (the ping and two 5-case runs, ~120K input tokens). A full 1.8 run is about $1.10 (89 answerable cases × 12 calls).
 
+### 1.9 — The regression harness (2026-11-27)
+- **The rule** (`evaluation/regression.py`, thresholds in `evaluation/thresholds.json`, set from `baseline.json`):
+  - **Floors:** each quality metric's floor is the lower end of the baseline's 95% interval, rounded down. A drop below it is more than resampling the questions would explain. Recall@5 ≥ 0.095, recall@10 ≥ 0.149, MRR ≥ 0.078, nDCG@10 ≥ 0.090, faithfulness ≥ 0.678, answer relevancy ≥ 0.593, context precision ≥ 0.120, context recall ≥ 0.213, answer correctness ≥ 0.380.
+  - **Ceilings:** $/query may grow by half (≤ $0.000714) and p95 latency may double (≤ 32.4 s), since latency moves with the network and the machine. An unknown cost fails.
+  - **Same set:** a run on another snapshot, or with ungraded cases, fails: its numbers are not comparable.
+- **How it works with the rest:** `tests/test_roadmap.py` already fails when the pipeline changes after the last run, so a change has to be re-measured (`python -m evaluation.evaluate`), and `tests/test_regression.py` then fails if the new numbers fall below the floors.
+- **Raising the floors** is done on purpose, with `python -m evaluation.regression --set <result>`, once an improvement is the new current pipeline.
+- **Phase 1 is complete (9/9).**
+
 ### 1.8 — The baseline (2026-11-27)
 - **Run by** `python -m evaluation.evaluate` (from `server/`), not `run_eval`: `run_eval` still scores the old synthetic corpus. Results in `evaluation/results/baseline.json`, at commit 05d823f on snapshot v1.
 - **Baseline (101 cases; RAGAS and retrieval on the 89 answerable; 95% bootstrap intervals):**

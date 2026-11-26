@@ -31,7 +31,7 @@ snapshot. Each upgrade is measured against a baseline before it counts.
 | Phase | Done | Next |
 |---|---|---|
 | 0 Foundations | 7/7 | complete |
-| 1 Data and baseline | 8/9 | 1.9 Regression harness |
+| 1 Data and baseline | 9/9 | complete |
 | 2 Database and API | 0/7 | 2.1 Neon schema |
 | 3 Structured outputs | 0/3 | 3.1 Schemas |
 | 4 Parsing and hybrid retrieval | 0/6 | 4.1 Layout-aware 10-K and 10-Q parsing |
@@ -184,7 +184,7 @@ Temperature starts at OpenAI's recommended 1.0 for gpt-oss. 1.0 vs 0.3 is run as
 - [x] **1.8 Baseline run**
   - The current pipeline over the snapshot.
   - *Done when:* the Baseline row is filled, with confidence intervals.
-- [ ] **1.9 Regression harness**
+- [x] **1.9 Regression harness**
   - `tests/test_regression.py` fails below `evaluation/thresholds.json`.
   - *Done when:* it passes at baseline thresholds.
 
