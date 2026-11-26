@@ -76,7 +76,7 @@ Temperature starts at OpenAI's recommended 1.0 for gpt-oss. 1.0 vs 0.3 is run as
 | 2026-11-24 | 0 | streamlit, langchain-*, faiss-cpu, httpx, pytest | newest in current major | see `requirements.txt` |
 | 2026-11-24 | 0 | pypdf, pymupdf, google-genai, anthropic | held at newest 6.x / 1.x / 2.x / 1.x | new majors (7 / 2 / 3 / 2) exist; taken in the phase that touches that code |
 | 2026-11-25 | 1 | httpx | 0.28.1 | still the newest release; `httpx.MockTransport` replays recorded EDGAR responses, so no mocking library is added |
-| 2026-11-25 | 1 | pydantic | 2.14.4 newest (2.13.5 installed via fastapi) | pinned at 1.4, where the golden-set schema first needs it |
+| 2026-11-26 | 1 | pydantic | 2.14.4 | pinned at 1.4 for the golden-set schema; upgraded from 2.13.5, which fastapi had pulled in. `pip check` clean |
 | 2026-11-25 | 1 | ragas | 0.4.4 newest | pinned at 1.6, after checking its Gemini judge support |
 
 ---
@@ -152,6 +152,11 @@ Temperature starts at OpenAI's recommended 1.0 for gpt-oss. 1.0 vs 0.3 is run as
     - Cross-period means year over year and quarter over quarter.
     - Some Q4 questions must be derived. For flow figures (revenue, income, cash flow), Q4 is the 10-K's annual figure minus the Q3 10-Q's nine-month figure. Balance-sheet figures are a point in time, so Q4 is read straight from the 10-K.
   - Relevance is labelled by **text span** (accession + char offsets), so labels survive re-chunking and the database move.
+    - Offsets point into `html_text` of the pinned filing, the text 1.3 indexes. Each span also keeps its quote, so it can be found again if 4.1 changes the text.
+  - How the set is made (`evaluation/golden.py`):
+    - Cases are drafted into `golden_candidates.jsonl`. `python -m evaluation.golden locate` turns each quoted passage into offsets, and refuses a quote that is not unique in its filing.
+    - A person reviews each one in `evaluation/review_app.py`, which shows the highlighted passage inside its filing. An unanswerable case comes with a search box over the filings.
+    - Approved cases go to `golden.jsonl`, stamped with the reviewer and date. Rejected ones go to `golden_rejected.jsonl` with the reason.
   - *Done when:* every case validates, with at least 8 of each type and at least 20 on 10-Qs.
 - [ ] **1.5 Exact metrics, from scratch**
   - NumPy recall@k, MRR, nDCG@10, bootstrap CI, Cohen's kappa.
@@ -365,6 +370,11 @@ What it showed:
 - **Every one of the 72 pinned filings declares its fiscal year and period on its cover**, so none had to be placed by dates. The covers agree with how each company names its years. Walmart's year ending 31 January 2026 is fiscal 2026. Johnson & Johnson's 52/53-week years end on 31 December 2023, 29 December 2024 and 28 December 2025.
 - **A ticker can move to a new company record.** In 2026 ExxonMobil reorganised under a new parent, ExxonMobil Holdings Corp. The XOM ticker now maps to the new CIK, whose record holds only the two newest 10-Qs; the years before sit under the old Exxon Mobil Corp CIK. The snapshot uses Chevron (CVX) instead. Following a predecessor CIK is left for the refresh job (2.7) to decide, if a tracked company does this.
 - **Filings are large and uneven.** The 72 pinned filings come to 321 MB, from 12.5 MB for Apple's twelve to 141 MB for JPMorgan's. JPMorgan's largest single filing is 13 MB of HTML. 1.3 indexes them, and 2.3 measures what that costs in memory.
+
+### 1.3–1.4 — The baseline loader and the golden set (2026-11-26)
+- **The 72 filings make 31,119 chunks**, indexed in 15.4 minutes on CPU. Size varies by a factor of 13: an Apple 10-Q is about 10,000 words (about 90 chunks), a JPMorgan 10-Q about 130,000 (about 1,100 chunks).
+- **The minimal loader reads tables unevenly.** Most filings' tables come out one row per line ("Total net sales | 478,834 | 416,161 | 391,035"). Microsoft's come out one cell per line, with the row label, the "$" signs and each year's figure on separate lines. A chunk can then hold figures whose label sits in the previous chunk. This is what 4.2 is for, and the golden set's table questions will show how much it costs.
+- **The same figure often appears several times in one filing** (the income statement, the MD&A table, the segment note). A golden span has to say which occurrence it means, so quotes are lengthened until they are unique: often by taking in the row above.
 
 ## Failure cases
 5–10 concrete wrong answers, each with its tag and the trace that explained it. Added from Phase 5 on.

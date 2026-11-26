@@ -56,6 +56,9 @@ faiss-cpu==1.16.0
 # Filings are fetched over plain HTTP (ingestion/edgar.py, Phase 1).
 httpx==0.28.1
 
+# --- Evaluation --------------------------------------------------------------
+pydantic==2.14.4         # the golden-set schema (evaluation/golden.py); fastapi needs it too
+
 # --- Service (Phase 2) -----------------------------------------------------
 fastapi==0.165.0
 uvicorn==0.54.0
