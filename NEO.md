@@ -86,6 +86,14 @@ Last checked against ROADMAP.md: 2026-11-27.
   Where retrieval missed (context recall 0), correctness is low. This is the same weakness 1.5 found: the right company, the wrong filing.
 - **Still to check before 1.8:** that the Billing console shows these calls under "Amazon Bedrock", paid by credits (it can lag a day).
 
+### 1.6 — Made ready for 1.8 (2026-11-27, owner agreed)
+- **Answer correctness is scored on facts alone** (`weights=[1.0, 0.0]`, `METRIC_SETTINGS` in `evaluation/judge.py`). RAGAS's default gives 25% to embedding similarity, which pays a wrong figure on the right topic.
+- **Metric settings are part of every grade's key**, so changing one re-grades that metric. The regrade cost 0 judge calls, because the prompts were unchanged and came from the call cache.
+- **Unanswerable cases stay out of RAGAS** (`judge.answerable`). Their right answer is a refusal, which RAGAS marks down; 5.4's refusal accuracy scores them. 1.8 grades the 89 answerable cases with RAGAS.
+- **Grading runs 8 at a time** (`config.JUDGE_CONCURRENCY`); a throttled call backs off. A full run should take about 15 minutes, not 2 hours. The cost is unchanged.
+- **The judge is lenient on hedged answers (found by hand, 2026-11-27).** The services-growth answer said the passages lacked the figure, then invented $35B → $38B; the filing says $109B → $123B. DeepSeek counted the three hedge sentences ("the excerpts do not include…") as true positives against the reference, so facts-only correctness still came to 0.46 (3 / (3 + ½·7)). The wrong figures were all caught as false positives. This is the case for P3 and P4.
+- **Money:** about $0.10 spent so far (the ping and two 5-case runs, ~120K input tokens). A full 1.8 run is about $1.10 (89 answerable cases × 12 calls).
+
 ### 1.6 — Facts that changed since ROADMAP.md was written
 - The 5 check cases now come from the approved `golden.jsonl` (the default), not from drafts with `--candidates`. They are the same 5 Apple cases, one per answerable type.
 
@@ -100,4 +108,6 @@ Last checked against ROADMAP.md: 2026-11-27.
 ## Proposals (not agreed)
 
 - **P1. RAGAS only on key runs.** Run RAGAS on the baseline, on the best configuration of each phase, and on the final system: about 6–8 runs, not one per ablation. Retrieval metrics still run on every experiment, since they cost nothing. On Bedrock this is about $20–30 in all; RAGAS on every ablation (~20 runs) would be about $65.
+- **P3. Check the judge early, not only in 7.5.** After the 1.8 run, the owner hand-labels about 25 grades (faithfulness and answer correctness). Agreement is reported as Cohen's kappa with a CI (`metrics.py` already has it), before the baseline numbers are used to decide anything. 7.5 keeps the full ~50-label calibration. Cost: the owner's time, $0.
+- **P4. An exact figure check beside answer correctness.** Free and deterministic: does the answer state the reference's figures (allowing rounding and millions written as billions), and does it state figures the reference does not? `golden check` already matches numbers this way. For financial questions this is a firmer signal than an LLM's statement matching, and it catches the case above, where the judge's leniency did not.
 - **P2. Somewhere to see online metrics.** The roadmap records traces (8.3 MLflow tracing), but nothing aggregates live metrics into a view, feedback signal or alert. Could join Phase 8 or 9.

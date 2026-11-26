@@ -142,6 +142,7 @@ JUDGE_EMBED_MODEL = EMBED_MODEL  # answer relevancy and correctness embed locall
 JUDGE_MAX_TOKENS = 8192         # RAGAS's default of 1024 can cut a long structured reply short
 JUDGE_CONTEXTS = 5              # retrieved chunks graded per answer: what the answer model saw
 JUDGE_RETRIES = 3               # waits on a throttled call before recording it as failed
+JUDGE_CONCURRENCY = 8           # grades in flight at once; a throttled one backs off
 JUDGE_CACHE_DIR = DATA_DIR / "judge_cache"
 ANSWER_CACHE_DIR = DATA_DIR / "answer_cache"
 

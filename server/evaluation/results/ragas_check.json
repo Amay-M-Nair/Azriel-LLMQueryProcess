@@ -29,6 +29,22 @@
       "cache_hits": 25,
       "judge_calls": 0,
       "errors": 0
+    },
+    {
+      "at": "2026-11-26T22:18:56+00:00",
+      "judge": "ragas-0.4.4/deepseek.v3.2/sentence-transformers/all-MiniLM-L6-v2",
+      "graded": 25,
+      "cache_hits": 0,
+      "judge_calls": 0,
+      "errors": 0
+    },
+    {
+      "at": "2026-11-26T22:19:19+00:00",
+      "judge": "ragas-0.4.4/deepseek.v3.2/sentence-transformers/all-MiniLM-L6-v2",
+      "graded": 25,
+      "cache_hits": 25,
+      "judge_calls": 0,
+      "errors": 0
     }
   ],
   "answers": "8d3eae6b9adb",
@@ -38,35 +54,35 @@
       "answer_relevancy": 0.9956374107493282,
       "context_precision": 0.19999999998,
       "context_recall": 1.0,
-      "answer_correctness": 0.8786234274071946
+      "answer_correctness": 1.0
     },
     "aapl-employees-fy2026": {
       "faithfulness": 0.5,
       "answer_relevancy": 0.9961625675489151,
       "context_precision": 0.0,
       "context_recall": 0.0,
-      "answer_correctness": 0.407604104574125
+      "answer_correctness": 0.4
     },
     "aapl-services-growth-fy2026": {
       "faithfulness": 0.2857142857142857,
       "answer_relevancy": 0.9699823634023277,
       "context_precision": 0.0,
       "context_recall": 0.0,
-      "answer_correctness": 0.4538320851272175
+      "answer_correctness": 0.4615384615384615
     },
     "aapl-wearables-definition": {
       "faithfulness": 1.0,
       "answer_relevancy": 0.9220032196873225,
       "context_precision": 0.5833333333041666,
       "context_recall": 1.0,
-      "answer_correctness": 0.7423001986761062
+      "answer_correctness": 0.7272727272727273
     },
     "aapl-sales-drivers-fy2026": {
       "faithfulness": 1.0,
       "answer_relevancy": 0.7484853480955432,
       "context_precision": 0.0,
       "context_recall": 0.25,
-      "answer_correctness": 0.38374369690334553
+      "answer_correctness": 0.33333333333333326
     }
   },
   "judge": "ragas-0.4.4/deepseek.v3.2/sentence-transformers/all-MiniLM-L6-v2"

@@ -114,6 +114,16 @@ def test_a_grade_is_keyed_by_everything_that_could_change_it():
     assert s.key("faithfulness", JUDGE) != sample(response="Something else.").key("faithfulness", JUDGE)
 
 
+def test_a_metric_setting_is_part_of_its_key(monkeypatch):
+    before = sample().key("answer_correctness", JUDGE)
+    monkeypatch.setitem(judge.METRIC_SETTINGS, "answer_correctness", {"weights": [0.75, 0.25]})
+    assert sample().key("answer_correctness", JUDGE) != before, "changing the weights re-grades"
+
+
+def test_answer_correctness_is_scored_on_facts_alone():
+    assert judge.METRIC_SETTINGS["answer_correctness"] == {"weights": [1.0, 0.0]}
+
+
 # --- Caching ---------------------------------------------------------------------------------
 
 def test_every_metric_is_graded_once_and_a_rerun_costs_nothing(tmp_path):
@@ -194,7 +204,40 @@ def test_the_judge_is_not_the_family_that_writes_the_answers():
     assert not model.endswith("-latest"), "an alias would drift"
 
 
+# --- Concurrency -------------------------------------------------------------------------------
+
+class SlowMetric(FakeMetric):
+    """Yields to the event loop while it 'calls the judge', and records how many ran at once."""
+
+    in_flight = 0
+    most = 0
+
+    async def ascore(self, **kwargs):
+        SlowMetric.in_flight += 1
+        SlowMetric.most = max(SlowMetric.most, SlowMetric.in_flight)
+        await asyncio.sleep(0.01)
+        SlowMetric.in_flight -= 1
+        return await super().ascore(**kwargs)
+
+
+def test_grades_run_concurrently_up_to_the_limit_and_come_back_in_order(tmp_path):
+    SlowMetric.in_flight = SlowMetric.most = 0
+    samples = [sample(f"s{i}", f"Answer {i}.") for i in range(4)]
+    metrics = {name: SlowMetric() for name in judge.METRICS}
+    report = asyncio.run(judge.grade(samples, metrics, ScoreCache(tmp_path / "scores.jsonl"), JUDGE, concurrency=3))
+    assert SlowMetric.most == 3, "three at once, never more"
+    assert [(r["case_id"], r["metric"]) for r in report.rows] ==         [(f"s{i}", m) for i in range(4) for m in judge.METRICS]
+
+
 # --- Choosing cases and recording runs -----------------------------------------------------
+
+def test_unanswerable_cases_are_left_to_refusal_accuracy():
+    pool = golden.load(golden.GOLDEN)
+    kept = judge.answerable(pool)
+    assert kept and all(c.spans for c in kept)
+    assert not any(c.type is golden.QuestionType.UNANSWERABLE for c in kept)
+    assert len(pool) - len(kept) == sum(c.type is golden.QuestionType.UNANSWERABLE for c in pool)
+
 
 def test_the_default_cases_are_one_answerable_case_per_type():
     pool = golden.load(golden.GOLDEN)

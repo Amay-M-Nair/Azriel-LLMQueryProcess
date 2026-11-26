@@ -59,6 +59,19 @@ ARGUMENTS: dict[str, Callable[["Sample"], dict]] = {
                                      "reference": s.reference},
 }
 
+# Settings that change what a metric's grade means. Passed to the metric, and part
+# of every grade's key, so changing one re-grades that metric only.
+METRIC_SETTINGS: dict[str, dict] = {
+    # RAGAS's default strictness=3 sends one prompt three times and averages. The
+    # call cache answers the second and third from the first, so 3 would only
+    # pretend to average: 1 says what actually happens.
+    "answer_relevancy": {"strictness": 1},
+    # Facts only. RAGAS's default gives 25% to embedding similarity with the
+    # reference, which pays a wrong figure on the right topic: an answer that put
+    # Apple's Services at $35B (the filing says $109B) scored 0.45.
+    "answer_correctness": {"weights": [1.0, 0.0]},
+}
+
 
 @dataclass(frozen=True)
 class Sample:
@@ -71,7 +84,8 @@ class Sample:
     reference: str
 
     def key(self, metric: str, judge: str) -> str:
-        blob = json.dumps([metric, judge, self.user_input, self.response, list(self.contexts), self.reference])
+        blob = json.dumps([metric, METRIC_SETTINGS.get(metric, {}), judge, self.user_input, self.response,
+                           list(self.contexts), self.reference])
         return hashlib.sha256(blob.encode("utf-8")).hexdigest()
 
 
@@ -154,20 +168,25 @@ class GradeReport:
 
 async def grade(samples: list[Sample], metrics: dict[str, Any], cache: ScoreCache, judge: str,
                 calls: Callable[[], int] = lambda: 0, sleep=asyncio.sleep,
-                on_progress: Callable[[str], None] | None = None) -> GradeReport:
-    """Score every sample on every metric, from the cache where possible."""
-    report = GradeReport()
+                on_progress: Callable[[str], None] | None = None,
+                concurrency: int = config.JUDGE_CONCURRENCY) -> GradeReport:
+    """Score every sample on every metric, from the cache where possible.
+
+    Up to `concurrency` grades run at once. Rows come back in sample-then-metric
+    order whatever order they finish in.
+    """
+    gate = asyncio.Semaphore(concurrency)
     before_hits, before_calls = cache.hits, calls()
-    for sample in samples:
-        for name, metric in metrics.items():
-            key = sample.key(name, judge)
-            cached = cache.get(key)
-            if cached is not None:
-                report.rows.append(cached | {"cached": True})
-                continue
+
+    async def one(sample: Sample, name: str, metric: Any) -> dict:
+        key = sample.key(name, judge)
+        cached = cache.get(key)
+        if cached is not None:
+            return cached | {"cached": True}
+        row = {"key": key, "case_id": sample.case_id, "metric": name, "judge": judge}
+        async with gate:
             if on_progress:
                 on_progress(f"grading {sample.case_id}: {name}")
-            row = {"key": key, "case_id": sample.case_id, "metric": name, "judge": judge}
             for attempt in range(config.JUDGE_RETRIES + 1):
                 try:
                     result = await metric.ascore(**ARGUMENTS[name](sample))
@@ -177,20 +196,17 @@ async def grade(samples: list[Sample], metrics: dict[str, Any], cache: ScoreCach
                         log.info("judge throttled; waiting %ds", wait)
                         await sleep(wait)
                         continue
-                    row |= {"value": None, "error": logs.redact(f"{type(exc).__name__}: {exc}")[:500]}
-                    report.rows.append(row | {"cached": False})
-                    break
-                else:
-                    value = result.value
-                    row |= {"value": None if value is None else float(value),
-                            "reason": (getattr(result, "reason", None) or "")[:1000],
-                            "graded_at": datetime.now(timezone.utc).isoformat(timespec="seconds")}
-                    cache.put(row)
-                    report.rows.append(row | {"cached": False})
-                    break
-    report.cache_hits = cache.hits - before_hits
-    report.judge_calls = calls() - before_calls
-    return report
+                    return row | {"value": None, "error": logs.redact(f"{type(exc).__name__}: {exc}")[:500],
+                                  "cached": False}
+                value = result.value
+                row |= {"value": None if value is None else float(value),
+                        "reason": (getattr(result, "reason", None) or "")[:1000],
+                        "graded_at": datetime.now(timezone.utc).isoformat(timespec="seconds")}
+                cache.put(row)
+                return row | {"cached": False}
+
+    rows = await asyncio.gather(*(one(s, name, m) for s in samples for name, m in metrics.items()))
+    return GradeReport(rows=list(rows), cache_hits=cache.hits - before_hits, judge_calls=calls() - before_calls)
 
 
 # --- The real judge ---------------------------------------------------------------------
@@ -242,20 +258,28 @@ def make_judge(cache_dir: Path = config.JUDGE_CACHE_DIR) -> tuple[dict[str, Any]
     llm = llm_factory(config.JUDGE_MODEL, provider="openai", client=client, cache=cache,
                       max_tokens=config.JUDGE_MAX_TOKENS)
     embeddings = HuggingFaceEmbeddings(model=config.JUDGE_EMBED_MODEL, cache=cache)
+    settings = METRIC_SETTINGS
     metrics = {
         "faithfulness": Faithfulness(llm=llm),
-        # RAGAS's default strictness=3 sends one prompt three times and averages. The
-        # call cache answers the second and third from the first, so 3 would only
-        # pretend to average: 1 says what actually happens.
-        "answer_relevancy": AnswerRelevancy(llm=llm, embeddings=embeddings, strictness=1),
+        "answer_relevancy": AnswerRelevancy(llm=llm, embeddings=embeddings, **settings["answer_relevancy"]),
         "context_precision": ContextPrecisionWithReference(llm=llm, name="context_precision"),
         "context_recall": ContextRecall(llm=llm),
-        "answer_correctness": AnswerCorrectness(llm=llm, embeddings=embeddings),
+        "answer_correctness": AnswerCorrectness(llm=llm, **settings["answer_correctness"]),
     }
     return metrics, lambda: len(counted)
 
 
 # --- CLI ----------------------------------------------------------------------------
+
+def answerable(cases: list[golden.GoldenCase]) -> list[golden.GoldenCase]:
+    """The cases RAGAS can grade: those with a cited answer.
+
+    An unanswerable case's right answer is a refusal. RAGAS would mark it down
+    (nothing for faithfulness to check, a "noncommittal" answer for relevancy),
+    so declining is scored on its own, by refusal accuracy (ROADMAP 5.4).
+    """
+    return [c for c in cases if c.spans]
+
 
 def default_cases(cases: list[golden.GoldenCase], n: int = 5) -> list[golden.GoldenCase]:
     """The first answerable case of each type, in a fixed order, until there are n."""
@@ -263,7 +287,7 @@ def default_cases(cases: list[golden.GoldenCase], n: int = 5) -> list[golden.Gol
              golden.QuestionType.DEFINITION, golden.QuestionType.SUMMARY, golden.QuestionType.FOLLOW_UP]
     picked = []
     for t in order:
-        found = next((c for c in cases if c.type is t and c.spans), None)
+        found = next((c for c in answerable(cases) if c.type is t), None)
         if found:
             picked.append(found)
     return picked[:n]
@@ -323,6 +347,10 @@ def main(argv: list[str]) -> int:
 
     pool = golden.load(golden.GOLDEN)
     chosen = [c for c in pool if c.id in set(args.ids)] if args.ids else default_cases(pool)
+    skipped = [c.id for c in chosen if not c.spans]
+    if skipped:
+        print(f"  not graded by RAGAS (unanswerable, scored by refusal accuracy in 5.4): {', '.join(skipped)}")
+    chosen = answerable(chosen)
     store = answers.load_store()
     answer_dir = config.ANSWER_CACHE_DIR / answers.fingerprint()
     samples = []
