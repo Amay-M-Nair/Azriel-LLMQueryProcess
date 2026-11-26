@@ -1,7 +1,6 @@
 """Setup checker.  Run it from server/ with:
 
     ../.venv/Scripts/python.exe -m utils.check
-    ../.venv/Scripts/python.exe -m utils.check --models
     ../.venv/Scripts/python.exe -m utils.check --live
 
 `--live` is the one that tells you whether the thing actually works. Without
@@ -121,14 +120,6 @@ def report_edgar() -> bool:
 def main(argv: list[str]) -> int:
     ready = report_readiness()
     report_edgar()
-
-    if "--models" in argv:
-        print("\nGemini models available to your key:")
-        try:
-            for name in get_provider("gemini").list_models():
-                print(f"  {name}")
-        except Exception as exc:
-            print(f"  could not list models: {exc}")
 
     if "--live" in argv:
         if not ready:

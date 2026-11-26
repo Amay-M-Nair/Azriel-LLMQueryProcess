@@ -46,7 +46,6 @@ python-dotenv==1.2.4
 
 # --- Answer providers ------------------------------------------------------
 groq==1.7.0               # groq      - the answerer (gpt-oss-120b / 20b)
-google-genai==2.34.0      # gemini    - the evaluation judge, and a fallback. 3.x held
 # ollama needs no package: it is reached over plain HTTP on localhost
 
 # Vector index (retired after the pgvector parity check, ROADMAP 2.6)

@@ -6,7 +6,7 @@ client builds its provider from config alone, the sidebar reports Ready from
 one provider while a question is answered by another, or by none.
 
 That is not hypothetical: it shipped. The sidebar said "Using the key you
-entered" and every question came back "No Gemini API key found", because the
+entered" and every question came back "no API key found", because the
 key stopped at the status line.
 """
 
@@ -60,7 +60,7 @@ def ask(**kwargs):
 
 
 def test_the_typed_key_reaches_the_provider(recorded):
-    ask(provider_name="gemini", api_key="typed-into-the-sidebar")
+    ask(provider_name="groq", api_key="typed-into-the-sidebar")
     assert recorded["api_key"] == "typed-into-the-sidebar"
 
 
@@ -79,6 +79,6 @@ def test_no_choice_falls_back_to_config(recorded):
 
 
 def test_the_answer_still_comes_back(recorded):
-    events = ask(provider_name="gemini", api_key="k")
+    events = ask(provider_name="groq", api_key="k")
     tokens = [e["text"] for e in events if e["type"] == "token"]
     assert tokens == ["Canberra."]

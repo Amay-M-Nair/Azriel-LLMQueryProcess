@@ -5,14 +5,12 @@ PROVIDERS below. Nothing else in the project needs to change.
 """
 
 from backend.providers.base import Provider, ProviderError, ProviderNotReady
-from backend.providers.gemini import GeminiProvider
 from backend.providers.groq_provider import GroqProvider
 from backend.providers.ollama import OllamaProvider
 from utils import config
 
 PROVIDERS: dict[str, type[Provider]] = {
     "groq": GroqProvider,
-    "gemini": GeminiProvider,
     "ollama": OllamaProvider,
 }
 
@@ -40,7 +38,6 @@ def model_for(name: str) -> str:
     """The configured model name for a provider, for display purposes."""
     return {
         "groq": config.GROQ_MODEL,
-        "gemini": config.GEMINI_MODEL,
         "ollama": config.OLLAMA_MODEL,
     }.get(name.lower(), "?")
 

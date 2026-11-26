@@ -24,6 +24,13 @@ Last checked against ROADMAP.md: 2026-11-27.
 - **The one-model-per-metric rule still holds:** each metric has one fixed model, never a fall-through list. On Bedrock it is the same model for all five metrics, so `JUDGE_MODELS` (a dict) became `JUDGE_MODEL` (one string) in `utils/config.py`.
 - **The Gemini judge code was removed (owner, 2026-11-27):** the Gemini path, its five models and the daily-quota handling existed only for the free tier. The judge is Bedrock-only. A throttled call (429/503) is waited out, and any other failure is recorded and retried on the next run. `--candidates` went too: `golden.jsonl` is approved, so the judge always reads it. The Gemini runs stay in the history of `ragas_check.json` as a record; the 1.6 check only counts runs made by the current judge.
 
+### D2. Gemini is removed from the project
+- **Status:** decided by the owner on 2026-11-27.
+- **ROADMAP.md says:** "Gemini stays as judge and fallback, Ollama for offline dev" (0.6); google-genai "held at newest 2.x" (Versions checked, Phase 0).
+- **What changed:** the Gemini answer provider (`backend/providers/gemini.py`), its settings in `utils/config.py`, `utils.check --models`, the `google-genai` pin and `GOOGLE_API_KEY` are gone. The judge is Bedrock (D1). Answers come from Groq, with Ollama for offline work.
+- **What stays:** `tests/test_phase0.py` still fails on a Google-key-shaped string anywhere in the repo, because 0.1 revoked an exposed one. Log redaction now covers `AWS_BEARER_TOKEN_BEDROCK` in place of the Google keys.
+- **Why:** nothing in the plan uses Gemini any more, and the code existed only for its free-tier quota.
+
 ---
 
 ## Decisions within the roadmap

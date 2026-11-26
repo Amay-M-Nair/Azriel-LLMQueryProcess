@@ -113,7 +113,7 @@ def test_an_uploaded_filename_cannot_escape():
 
 def test_a_hidden_filename_is_refused():
     with pytest.raises(BadCollectionName):
-        collections.save_uploads("alice", [(".env", b"GOOGLE_API_KEY=secret")])
+        collections.save_uploads("alice", [(".env", b"GROQ_API_KEY=secret")])
 
 
 # --- Indexing behaviour ----------------------------------------------------

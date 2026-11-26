@@ -85,7 +85,7 @@ labelled questions across the five intents, and a scorer. Run it with:
 ../.venv/Scripts/python.exe -m evaluation.run_eval --answers   # from server/
 ```
 
-Against Gemini, over 15 chunks:
+Measured with the earlier Gemini answerer (since removed), over 15 chunks:
 
 | | |
 |---|---|
@@ -126,11 +126,11 @@ marked answer is more use than a dead end, and the boundary stays visible.
    .venv/Scripts/python.exe -m pip install -r requirements.txt
    ```
 
-2. Add an API key. Copy `.env.example` to `.env` and paste in a **free**
-   Gemini key from [aistudio.google.com/apikey](https://aistudio.google.com/apikey):
+2. Add an API key. Copy `.env.example` to `.env` and paste in a Groq key
+   from [console.groq.com/keys](https://console.groq.com/keys):
 
    ```
-   GOOGLE_API_KEY=...
+   GROQ_API_KEY=...
    ```
 
    Check it worked:
@@ -205,7 +205,7 @@ so any single piece can be replaced without disturbing the rest.
 | | `calculator.py` | Arithmetic, worked out locally |
 | | `rag.py` | Builds the prompt, hands it to the chosen provider |
 | | `llm.py` | Provider registry — picks one by name |
-| | `providers/` | One adapter per answer model (Groq, Gemini, Ollama) |
+| | `providers/` | One adapter per answer model (Groq, Ollama) |
 | **ingestion** | `document_loader.py` | File → pages of text, OCR included |
 | | `chunker.py` | Pages → overlapping chunks |
 | | `embedder.py` | Text → vectors |
@@ -232,29 +232,12 @@ switching providers changes nothing else in the system.
 
 | `PROVIDER` | Cost | Needs | Trade-off |
 |---|---|---|---|
-| `gemini` | Free tier | `GOOGLE_API_KEY` | **~20 requests/day per model**; documents go to Google |
+| `groq` | Free tier, then paid | `GROQ_API_KEY` | gpt-oss-120b / 20b; fast, but documents go to Groq |
 | `ollama` | Free forever | Ollama running locally | Offline and private, but a 3B model follows the citation rules less reliably |
 
 Set it in `utils/config.py`, or pick it from the sidebar while the app is
-running. To add a fourth, write a `Provider` subclass in `backend/providers/`
+running. To add a third, write a `Provider` subclass in `backend/providers/`
 and add one line to the registry in `backend/llm.py`.
-
-### The Gemini free-tier quota (important)
-
-The free tier allows roughly **20 requests per day, per model** — the quota id
-is `GenerateRequestsPerDayPerProjectPerModel-FreeTier`. That is a *daily* cap,
-not per-minute, and it is easy to hit while experimenting.
-
-Because it is *per model*, `GEMINI_FALLBACK_MODELS` in `utils/config.py` is
-effectively your daily budget: the provider falls through the list when a model
-is exhausted or overloaded, so five models means roughly 100 questions a day.
-Add more model names from `python -m utils.check --models` to extend it.
-
-When a request is rejected the provider reads the `retryDelay` the API supplies
-and waits exactly that long before retrying, rather than guessing.
-
-If you run out for the day, switch the sidebar to `ollama` and keep working
-offline.
 
 ### Running fully offline with Ollama
 
@@ -285,7 +268,7 @@ All in `utils/config.py`:
 - **`KEYWORD_RESCUE`** (0.6) — how good a keyword match has to be to survive
   `MIN_SIMILARITY` on its own. A chunk naming someone once is a real answer to
   a question about them, however low its cosine.
-- **`PROVIDER`** (`gemini`) — which model writes the answer. Switchable in the
+- **`PROVIDER`** (`groq`) — which model writes the answer. Switchable in the
   sidebar at runtime too.
 
 ## Why small documents skip retrieval
@@ -325,10 +308,10 @@ would have cost something already built and tested:
   here blends BM25 against cosine, which needs a number per chunk, and the
   stopword handling that stops a rare "the" dragging unrelated chunks up the
   ranking has no equivalent.
-- **The providers.** `ChatGoogleGenerativeAI` takes one model. This falls
-  through five when the daily free-tier quota on one is exhausted, reads the
-  `retryDelay` the API supplies rather than guessing, and says which quota was
-  hit. That is the difference between the free tier being usable and not.
+- **The providers.** `ChatGroq` takes one model. This falls through to the
+  cheaper model when the first is rate limited, waits the `retry-after` the API
+  sends rather than guessing, and counts reasoning tokens without streaming
+  them as answer text.
 - **The vector store.** The index is paired with a metadata store that
   identifies documents by content hash and removes one document's chunks
   without disturbing the rest.

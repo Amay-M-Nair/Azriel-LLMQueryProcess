@@ -44,7 +44,7 @@ def test_env_example_has_every_placeholder_and_no_values():
         line.split("=", 1) for line in lines
         if line.strip() and not line.lstrip().startswith("#") and "=" in line
     )
-    for name in ("GROQ_API_KEY", "GOOGLE_API_KEY", "SEC_USER_AGENT", "DATABASE_URL"):
+    for name in ("GROQ_API_KEY", "AWS_BEARER_TOKEN_BEDROCK", "SEC_USER_AGENT", "DATABASE_URL"):
         assert name in settings, f"{name} missing from .env.example"
     filled = {k: v for k, v in settings.items() if v.strip()}
     assert not filled, f".env.example carries values: {sorted(filled)}"

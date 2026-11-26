@@ -156,7 +156,7 @@ def test_redaction_introduces_no_control_characters():
 
 
 def test_a_known_key_is_removed_wherever_it_appears(monkeypatch):
-    monkeypatch.setenv("GOOGLE_API_KEY", KEY)
+    monkeypatch.setenv("AWS_BEARER_TOKEN_BEDROCK", KEY)
     assert KEY not in logs.redact(f"the key {KEY} was rejected")
     assert KEY not in logs.redact(f"Authorization: Bearer {KEY}")
 
@@ -168,7 +168,7 @@ def test_ordinary_messages_are_left_alone():
 
 def test_a_short_env_value_is_not_treated_as_a_key(monkeypatch):
     """Redacting a two-character value would blank half the log."""
-    monkeypatch.setenv("GOOGLE_API_KEY", "ab")
+    monkeypatch.setenv("AWS_BEARER_TOKEN_BEDROCK", "ab")
     assert logs.redact("a cab drove past") == "a cab drove past"
 
 
