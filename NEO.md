@@ -67,6 +67,24 @@ Logged here, not in ROADMAP.md's *Versions checked* table, since ROADMAP.md is n
 
 `pip check` is clean.
 
+### 2.6 — Both keyword engines are measured; lakebase_text is used if it is worth it (owner, 2026-11-28)
+- **Decided by the owner:** when 2.6 creates the Postgres baseline, run both keyword engines on the full golden set. If `lakebase_text` is worth it, hybrid search uses it from then on.
+- **Why:** on 15 Apple questions it found more golden passages with keyword search alone (recall@10 0.40 vs 0.27, see *2.3* below), probably thanks to Postgres's English stemming. It would also take keyword search off the server entirely: no 23 MB index, no startup build.
+- **Two rows, same run, same golden set, same snapshot scope:**
+  1. **Parity:** pgvector + our `CompactBM25`. This is the roadmap's 2.6 check and must equal the FAISS baseline. It stays the reference row, so the move to Postgres is proven on its own before anything changes.
+  2. **lakebase_text:** pgvector + a `lakebase_bm25` index for the keyword half. Everything else is unchanged: the same pool sizes, the same blend and the same keyword rescue. Its scores are negative (lower is better), so they are negated before the blend's max-normalisation.
+- **Retrieval first, no LLM cost:** both rows are scored on recall@5 (what the answer model sees), recall@10, MRR and nDCG@10. That needs no Groq calls and no judge. Only the row that wins gets answers and RAGAS, under P1.
+- **When it counts as worth it** (paired bootstrap over the 89 answerable questions, `metrics.paired_difference`):
+  - **Better:** the 95% interval of the recall@5 difference lies above 0, and nDCG@10 is not lower. → Adopt it.
+  - **Tied:** the interval spans 0. → The owner decides. Equal quality with no server memory and no startup build may well be worth it.
+  - **Worse:** → Keep `CompactBM25`.
+  - Whatever the outcome, report the table questions separately (22 cases): figures are where Postgres's English parser could hurt, since it splits "478,834" and "$391.0" its own way.
+- **To solve before the lakebase row can count:**
+  - **Scope.** Its BM25 statistics come from every row the index covers. Our in-memory index is built over the snapshot scope alone. Once 2.7 adds new filings to `chunks`, an index over the whole table would shift the evaluation's scores. The options are a partial index over the snapshot's accessions, or a separate evaluation table. Pick one at 2.6.
+  - **The query.** Turning a question into a `bm25query` (`to_bm25query(to_tsvector('english', q), index)`) needs a check that it matches any of the query's words, not all of them. The 2.3 check suggests it does (questions returned 10 hits), but confirm it on purpose.
+  - **Version risk.** `lakebase_text` is 0.1.3, and Neon has just retired `pg_search`. If it is adopted, keep `CompactBM25` in the code as the fallback until it has proved itself.
+- **Storage:** the tsvector column and index at full size are estimated at ~30–40 MB of Neon's 1 GB. Measured when the row runs.
+
 ### 2.3 — Keyword search that fits (2026-11-28)
 - **Today's BM25 does not fit:** over the snapshot's 31,119 chunks, `vectorstore/keyword.BM25` holds **331 MB** and peaks at **+399 MB**, against 0.7's ~75 MB of headroom. The cause is storage, not data: 2.0 million postings, each kept as a Python tuple.
 - **`CompactBM25` (`server/db/keyword.py`)** keeps the same postings in flat numpy arrays (compressed sparse rows by term). Measured by `python -m tools.bm25_memory`, each version in a fresh process (`evaluation/results/bm25_memory.json`):
