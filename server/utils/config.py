@@ -10,8 +10,6 @@ REPO_ROOT = PROJECT_ROOT.parent                          # holds .env and data/
 load_dotenv(REPO_ROOT / ".env")  # API keys land in the environment
 
 DATA_DIR = REPO_ROOT / "data"
-INDEX_DIR = DATA_DIR / "index"
-UPLOAD_DIR = DATA_DIR / "uploads"
 
 # --- Retrieval (runs locally, costs nothing) -------------------------------
 # A small, fast embedding model. 90 MB, downloads once on first use.
@@ -112,12 +110,6 @@ OLLAMA_NUM_PREDICT = 2048
 OLLAMA_TIMEOUT = 300             # seconds; local models can be slow
 
 USE_REFUSAL_FALLBACKS = True     # retry on another model if a request is declined
-
-# --- Collections -----------------------------------------------------------
-# The namespace documents are kept under. Each collection has its own index,
-# and no collection can retrieve another's documents.
-DEFAULT_COLLECTION = "default"
-
 
 # --- SEC EDGAR (ingestion/edgar.py) ----------------------------------------
 # Filings are cached here as data/filings/{ticker}/{fiscal_year}/{period}/.

@@ -10,7 +10,7 @@ Two blocks in ROADMAP.md are generated, never typed:
            Subphases with no test in the run keep the box they had.
 
   results  the ablation table, rendered from evaluation/results/*.json. Each
-           file is one configuration's run; `python -m evaluation.run_eval`
+           file is one configuration's run; `python -m evaluation.evaluate`
            writes them (Phase 1).
 
     python -m tools.roadmap           # re-render both blocks from what is there

@@ -59,9 +59,6 @@ def test_hosting_leftovers_are_gone():
     for setting in ("API_URL", "COLLECTION_MODE", "PUBLIC"):
         assert not hasattr(config, setting), f"config.{setting} still exists"
 
-    import api.client
-    assert not hasattr(api.client, "HttpClient")
-
 
 # --- 0.3 Repo layout and rename -----------------------------------------------
 
@@ -69,7 +66,7 @@ def test_hosting_leftovers_are_gone():
 def test_layout():
     root = config.REPO_ROOT
     assert config.PROJECT_ROOT == root / "server"
-    for package in ("api", "backend", "ingestion", "vectorstore", "utils", "evaluation", "tools"):
+    for package in ("backend", "db", "ingestion", "vectorstore", "utils", "evaluation", "tools"):
         assert (root / "server" / package / "__init__.py").exists(), f"server/{package} missing"
     assert (root / "web").is_dir()
     assert config.DATA_DIR == root / "data", "data/ must stay at the repo root (git-ignored)"

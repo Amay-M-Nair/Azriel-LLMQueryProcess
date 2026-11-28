@@ -97,5 +97,5 @@ def test_results_are_not_older_than_the_pipeline():
     newest = max(int(r.get("timestamp", 0)) for r in results)
     assert newest >= last_change, (
         "the pipeline changed after the last evaluation run - "
-        "rerun  python -m evaluation.run_eval  (from server/)"
+        "rerun  python -m evaluation.evaluate  (from server/)"
     )

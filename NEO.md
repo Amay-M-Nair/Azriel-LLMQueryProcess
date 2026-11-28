@@ -31,6 +31,25 @@ Last checked against ROADMAP.md: 2026-11-28.
 - **What stays:** `tests/test_phase0.py` still fails on a Google-key-shaped string anywhere in the repo, because 0.1 revoked an exposed one. Log redaction now covers `AWS_BEARER_TOKEN_BEDROCK` in place of the Google keys.
 - **Why:** nothing in the plan uses Gemini any more, and the code existed only for its free-tier quota.
 
+### D3. The old Azriel app is removed now, not in Phase 9
+- **Status:** decided by the owner on 2026-11-28.
+- **ROADMAP.md says:** the interim Streamlit page and `.streamlit/config.toml` stay until Phase 9 (0.2, 9.4). README describes the pipeline as it stands.
+- **What went:**
+  - The old document-chat app: `server/app.py`, `server/.streamlit/`, and `server/api/` (its in-process client and upload collections).
+  - The app-only helpers: `utils/examples.py` and `utils/env_file.py` (typing API keys into the page).
+  - The synthetic evaluation: `evaluation/run_eval.py`, `evaluation/corpus/` and `evaluation/dataset.jsonl`, replaced by `evaluate.py` and the golden set.
+  - Their tests, and the settings only the app used (`INDEX_DIR`, `UPLOAD_DIR`, `DEFAULT_COLLECTION`).
+- **Why:** the owner found the old build confusing next to the SEC system. Nothing in the SEC pipeline or the evaluation used these files, and none of their tests were roadmap checks, so no subphase lost its tick.
+- **What changed with it:**
+  - README.md now describes only the SEC build.
+  - The stale-results hint in `tests/test_roadmap.py` and the roadmap tool now point to `evaluation.evaluate`. ROADMAP.md itself still names `run_eval` in "How this file stays current"; read it as `evaluate`.
+  - The 0.3 layout test checks `db/` instead of `api/`.
+- **What stays until its own phase** (changing `ingestion/` or `vectorstore/` marks the baseline stale and forces a new evaluation run):
+  - The PDF, Word and OCR readers in `ingestion/document_loader.py`, the upload path in `ingestion/pipeline.py`, and their packages (pypdf, python-docx, pymupdf, rapidocr). These go in 4.1.
+  - The FAISS store: 2.6.
+  - `streamlit`, still needed by the local golden-set review tool.
+- **Until Phase 9 there is no web page to try the system in.** The API (2.5) is the next way to ask it questions.
+
 ---
 
 ## Decisions within the roadmap
