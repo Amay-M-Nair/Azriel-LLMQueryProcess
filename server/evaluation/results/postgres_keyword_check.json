@@ -1,0 +1,139 @@
+{
+  "date": "2026-11-28",
+  "ticker": "AAPL",
+  "chunks": 1808,
+  "questions": 15,
+  "k": 10,
+  "pg_search": "extension \"pg_search\" is deprecated and no longer allowed\nHINT:  This extension was previously allowed but is now deprecated. See neon.deprecated_extensions for the list of deprecated extensions.",
+  "lakebase_text_version": "0.1.3",
+  "index_mb": 0.688128,
+  "table_with_tsvector_mb": 3.506176,
+  "top10_overlap_mean": 0.6333333333333333,
+  "recall_at_10_ours": 0.26666666666666666,
+  "recall_at_10_lakebase": 0.4,
+  "lakebase_ms_median": 0.725,
+  "lakebase_ms_max": 0.878,
+  "per_case": [
+    {
+      "id": "aapl-net-sales-fy2026",
+      "returned_ours": 10,
+      "returned_lakebase": 10,
+      "overlap": 0.9,
+      "recall_ours": 0.0,
+      "recall_lakebase": 0.0
+    },
+    {
+      "id": "aapl-net-income-fy2026",
+      "returned_ours": 10,
+      "returned_lakebase": 10,
+      "overlap": 0.8,
+      "recall_ours": 1.0,
+      "recall_lakebase": 1.0
+    },
+    {
+      "id": "aapl-iphone-q3-2026",
+      "returned_ours": 10,
+      "returned_lakebase": 10,
+      "overlap": 0.8,
+      "recall_ours": 1.0,
+      "recall_lakebase": 1.0
+    },
+    {
+      "id": "aapl-net-sales-q1-2025",
+      "returned_ours": 10,
+      "returned_lakebase": 10,
+      "overlap": 0.9,
+      "recall_ours": 0.0,
+      "recall_lakebase": 0.0
+    },
+    {
+      "id": "aapl-employees-fy2026",
+      "returned_ours": 10,
+      "returned_lakebase": 10,
+      "overlap": 0.4,
+      "recall_ours": 1.0,
+      "recall_lakebase": 1.0
+    },
+    {
+      "id": "aapl-buybacks-9m-2026",
+      "returned_ours": 10,
+      "returned_lakebase": 10,
+      "overlap": 1.0,
+      "recall_ours": 0.0,
+      "recall_lakebase": 0.0
+    },
+    {
+      "id": "aapl-services-growth-fy2026",
+      "returned_ours": 10,
+      "returned_lakebase": 10,
+      "overlap": 0.3,
+      "recall_ours": 0.0,
+      "recall_lakebase": 1.0
+    },
+    {
+      "id": "aapl-q4-net-sales-fy2026",
+      "returned_ours": 10,
+      "returned_lakebase": 10,
+      "overlap": 0.9,
+      "recall_ours": 0.0,
+      "recall_lakebase": 0.0
+    },
+    {
+      "id": "aapl-iphone-followup-fy2025",
+      "returned_ours": 10,
+      "returned_lakebase": 10,
+      "overlap": 0.0,
+      "recall_ours": 0.0,
+      "recall_lakebase": 0.0
+    },
+    {
+      "id": "aapl-buybacks-followup-q3-2026",
+      "returned_ours": 10,
+      "returned_lakebase": 10,
+      "overlap": 0.7,
+      "recall_ours": 0.0,
+      "recall_lakebase": 0.0
+    },
+    {
+      "id": "aapl-wearables-definition",
+      "returned_ours": 10,
+      "returned_lakebase": 10,
+      "overlap": 0.8,
+      "recall_ours": 0.0,
+      "recall_lakebase": 1.0
+    },
+    {
+      "id": "aapl-fiscal-year-definition",
+      "returned_ours": 10,
+      "returned_lakebase": 10,
+      "overlap": 0.9,
+      "recall_ours": 1.0,
+      "recall_lakebase": 1.0
+    },
+    {
+      "id": "aapl-sales-drivers-fy2026",
+      "returned_ours": 10,
+      "returned_lakebase": 10,
+      "overlap": 0.1,
+      "recall_ours": 0.0,
+      "recall_lakebase": 0.0
+    },
+    {
+      "id": "aapl-q3-summary-2026",
+      "returned_ours": 10,
+      "returned_lakebase": 10,
+      "overlap": 0.4,
+      "recall_ours": 0.0,
+      "recall_lakebase": 0.0
+    },
+    {
+      "id": "aapl-services-definition",
+      "returned_ours": 10,
+      "returned_lakebase": 10,
+      "overlap": 0.6,
+      "recall_ours": 0.0,
+      "recall_lakebase": 0.0
+    }
+  ],
+  "note": "Keyword search alone, both over the same Apple chunks (BM25 statistics from that subset). Times are execution inside Postgres on Neon's free compute, without the network round trip. lakebase_text uses its defaults (k1 1.2, b 0.75; ours is k1 1.5, b 0.75)."
+}

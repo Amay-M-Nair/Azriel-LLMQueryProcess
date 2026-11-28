@@ -32,7 +32,7 @@ snapshot. Each upgrade is measured against a baseline before it counts.
 |---|---|---|
 | 0 Foundations | 7/7 | complete |
 | 1 Data and baseline | 9/9 | complete |
-| 2 Database and API | 2/7 | 2.3 BM25 from Postgres |
+| 2 Database and API | 3/7 | 2.4 Ingest CLI |
 | 3 Structured outputs | 0/3 | 3.1 Schemas |
 | 4 Parsing and hybrid retrieval | 0/6 | 4.1 Layout-aware 10-K and 10-Q parsing |
 | 5 Reranking, expansion, refusal | 0/5 | 5.1 Cross-encoder reranker |
@@ -202,7 +202,7 @@ Temperature starts at OpenAI's recommended 1.0 for gpt-oss. 1.0 vs 0.3 is run as
 - [x] **2.2 pgvector store**
   - Same `search` interface as `VectorStore`, plus company/form/year/period/section filters. Exact scan first.
   - *Done when:* store tests pass against a test database.
-- [ ] **2.3 BM25 from Postgres**
+- [x] **2.3 BM25 from Postgres**
   - Chunks loaded into `vectorstore/keyword.BM25` at startup; `pg_search` checked as an alternative.
   - With 10-Qs the index is roughly four times the filings of a 10-K-only design, so BM25's memory is measured at full size against the 0.7 headroom (~75 MB). If it does not fit, the keyword search moves into Postgres.
   - *Done when:* BM25 scores match the FAISS-era ones and its memory is recorded.

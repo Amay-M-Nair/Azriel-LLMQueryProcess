@@ -1,0 +1,27 @@
+{
+  "date": "2026-11-28",
+  "machine": "Windows 10, Python 3.11.9",
+  "headroom_mb": 75,
+  "results": {
+    "bm25": {
+      "label": "BM25 (vectorstore/keyword.py, every text in a list)",
+      "chunks": 31119,
+      "held_mb": 330.891264,
+      "peak_above_start_mb": 399.040512,
+      "build_seconds": 2.4069999999919673,
+      "query_ms": 20.666666663601063,
+      "index_nbytes_mb": null
+    },
+    "compact": {
+      "label": "CompactBM25 (db/keyword.py, texts streamed)",
+      "chunks": 31119,
+      "held_mb": 23.273472,
+      "peak_above_start_mb": 54.64064,
+      "build_seconds": 2.8910000000032596,
+      "query_ms": 0.0,
+      "index_nbytes_mb": 18.721376
+    }
+  },
+  "fits": true,
+  "note": "held = RSS after building minus RSS before; peak = peak working set (Windows) or max RSS (Linux) minus RSS before. The scores of both are identical (tests/test_db_keyword.py)."
+}

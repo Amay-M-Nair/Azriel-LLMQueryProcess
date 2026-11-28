@@ -98,9 +98,8 @@ def db(neon_migrated):
 
 
 def keyword_index(conn, scope: Filters | None = None) -> KeywordIndex:
-    clause, params = where(scope)
-    rows = conn.execute(f"SELECT id, text FROM chunks{clause} ORDER BY id", params).fetchall()
-    return KeywordIndex([r[0] for r in rows], [r[1] for r in rows])
+    """Loaded from Postgres as at startup (2.3), in small batches to cross their edges."""
+    return KeywordIndex.load(conn, scope, batch=64)
 
 
 def assert_same(expected, got):

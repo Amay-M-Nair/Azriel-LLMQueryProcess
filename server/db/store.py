@@ -10,8 +10,8 @@ Search is an exact scan (no vector index), and ranks by inner product
 it equals the cosine similarity, without the division `<=>` would add. Ties are
 broken by row id, which is ingest order: the order FAISS holds the chunks in.
 
-The keyword half of hybrid search is a `KeywordIndex`, BM25 over the same
-chunks, kept in memory (2.3 loads it from Postgres at startup). The blend is
+The keyword half of hybrid search is a `KeywordIndex` (db/keyword.py), BM25
+over the same chunks, kept in memory and loaded from Postgres at startup. The blend is
 the FAISS store's, line for line; `tests/test_db_store.py` runs both stores
 over the same chunks and checks they return the same thing.
 
@@ -32,7 +32,7 @@ import psycopg
 
 from ingestion.chunker import Chunk
 from utils import config
-from vectorstore.keyword import BM25
+from db.keyword import KeywordIndex  # noqa: F401  (re-exported: db.store.KeywordIndex)
 
 # What a Chunk is rebuilt from, in order.
 CHUNK_COLUMNS = ("id, chunk_id, accession, ticker, form, fiscal_year, fiscal_period, page,"
@@ -94,34 +94,6 @@ def where(*filters: Filters | None) -> tuple[str, list]:
             sql += s
             params += p
     return (" WHERE " + " AND ".join(sql) if sql else ""), params
-
-
-class KeywordIndex:
-    """BM25 over a fixed set of chunks, addressed by their database ids.
-
-    BM25's statistics (document frequencies, average length) come from the
-    whole set, so scores depend on which chunks are in it, never on a search's
-    filters: the same as the FAISS store, which scores against everything.
-    """
-
-    def __init__(self, ids: Sequence[int], texts: Sequence[str]):
-        if len(ids) != len(texts):
-            raise ValueError(f"{len(ids)} ids but {len(texts)} texts")
-        self.bm25 = BM25(list(texts))
-        self.position = {int(i): n for n, i in enumerate(ids)}
-
-    def __len__(self) -> int:
-        return len(self.position)
-
-    def scores(self, query: str, ids: Sequence[int]) -> np.ndarray:
-        try:
-            rows = [self.position[int(i)] for i in ids]
-        except KeyError as missing:
-            # A chunk added since this index was built. Scoring it 0 would
-            # quietly rank it below everything; better to say so.
-            raise LookupError(f"chunk id {missing} is not in the keyword index; "
-                              "it was built before that chunk was added. Rebuild it.") from None
-        return self.bm25.scores(query)[rows]
 
 
 class PgVectorStore:

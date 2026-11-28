@@ -67,6 +67,36 @@ Logged here, not in ROADMAP.md's *Versions checked* table, since ROADMAP.md is n
 
 `pip check` is clean.
 
+### 2.3 — Keyword search that fits (2026-11-28)
+- **Today's BM25 does not fit:** over the snapshot's 31,119 chunks, `vectorstore/keyword.BM25` holds **331 MB** and peaks at **+399 MB**, against 0.7's ~75 MB of headroom. The cause is storage, not data: 2.0 million postings, each kept as a Python tuple.
+- **`CompactBM25` (`server/db/keyword.py`)** keeps the same postings in flat numpy arrays (compressed sparse rows by term). Measured by `python -m tools.bm25_memory`, each version in a fresh process (`evaluation/results/bm25_memory.json`):
+
+  | | Held after building | Peak while building | Build | One query |
+  |---|---|---|---|---|
+  | `BM25` (every text in a list) | 330.9 MB | +399.0 MB | 2.4 s | 16–21 ms |
+  | **`CompactBM25` (texts streamed)** | **23.3 MB** | **+54.6 MB** | 2.9 s | <1 ms |
+
+  - The first version peaked at +85 MB because of temporary copies made while regrouping postings by term. It now takes views instead of copies and frees each array as soon as it has been used.
+  - The index itself is ~19 MB (`nbytes()`), and it grows about 6 MB per extra fiscal year of filings.
+- **The scores are bit for bit the same:** identical on all 101 golden questions over the real chunks, and on made-up corpora with empty chunks, stopword-only chunks and repeated query words. The arithmetic copies BM25's float32 steps under NumPy 2's type rules (a Python number meeting a float32 takes float32's type). So 2.6 parity is untouched.
+- **Loading from Postgres:** `KeywordIndex.load(conn, scope, batch=5000)` reads `id, text` in id order, `batch` rows at a time (keyset pagination, so it also works in autocommit), and feeds each text straight into the index. Ids are looked up with a sorted array and binary search instead of a dict (~0.5 MB rather than ~3 MB). The 2.2 FAISS-comparison tests now load their keyword index this way.
+- **`pg_search` cannot be used on Neon:** it is still listed in `pg_available_extensions`, but `CREATE EXTENSION` is refused: "deprecated and no longer allowed" (`neon.deprecated_extensions`). Neon retired it on 2026-09-21. Its replacement is Neon's own **`lakebase_text`** (0.1.3): a `lakebase_bm25` index over a tsvector column.
+- **`lakebase_text`, checked instead** (`python -m tools.postgres_keyword_check`, `evaluation/results/postgres_keyword_check.json`). Apple's 1,808 real chunks were loaded into a throwaway schema on the test branch, and the 15 answerable Apple golden questions were run through keyword search alone, top 10:
+
+  | | Our BM25 | lakebase_text |
+  |---|---|---|
+  | Recall@10 on golden spans | 0.27 | **0.40** |
+  | Top-10 agreement with ours | — | 63% |
+  | Query time inside Postgres | <1 ms (in memory) | 0.7 ms median |
+  | Size | ~1 MB in memory | 0.7 MB index + tsvector column (table 3.5 MB with it) |
+
+  - It probably does better because of Postgres's English stemming ("sales" matches "sale", "increased" matches "increase"), which our tokenizer lacks. Its defaults are k1 1.2 and b 0.75; ours are 1.5 and 0.75.
+  - Only 15 questions, so this is a lead, not a result.
+  - **Not adopted here:** it scores differently, so it can't give parity in 2.6. It is a candidate for its own Results row in Phase 4 (beside 4.5's RRF). Adopting it would also free the ~23 MB and the startup build.
+  - At full size the tsvector column and index would take an estimated ~30–40 MB of Neon's 1 GB.
+- **Done when met:** `tests/test_db_keyword.py` (12 tests): bit-equal scores on made-up and real data, loading from Postgres across batch edges and within a scope, and the recorded memory inside the headroom. `pytest` ticked 2.3.
+- **Still to see:** the startup cost of loading 31k texts from Neon. Measured once 2.4 has loaded them.
+
 ### 2.1 — Neon setup (2026-11-28, owner)
 - **Free plan** (Neon's FAQ, Nov 2026): 1 GB storage per project, 10 branches, 100 CU-hours a month, scale-to-zero after 5 idle minutes. If storage passes 1 GB, writes fail; nothing is billed. The 31k chunks with vectors should take about 120–150 MB.
 - **Project** `grounded-qa` on AWS US East (Ohio), where Render also has a region (9.4).
