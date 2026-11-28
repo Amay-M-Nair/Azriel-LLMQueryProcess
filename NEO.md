@@ -74,6 +74,28 @@ Logged here, not in ROADMAP.md's *Versions checked* table, since ROADMAP.md is n
 - **Done when met:** 14 tests in `tests/test_db_schema.py` apply the migrations to a new empty schema on the `test` branch, then check constraints, cascades and cosine ranking. The CLI applied 001 to the `test` branch itself; a second run applied nothing. `pytest` ticked 2.1.
 - **Not done yet:** the `production` branch is not migrated. That happens when 2.4 first ingests, or earlier with `python -m db.migrate`.
 
+### 2.2 — The pgvector store (2026-11-28)
+- **Where it lives:** `server/db/store.py`, not `server/vectorstore/`. `tests/test_roadmap.py` marks the baseline stale when anything under `backend/`, `ingestion/` or `vectorstore/` is committed after the last evaluation run. The pipeline doesn't use this store until 2.6, and 2.6 is itself an evaluation run, so it re-measures then.
+- **Interface:** `PgVectorStore` answers what the pipeline asks of the FAISS store: `len(store)`, `sources`, `total_words` and `search(query_vector, k, query, min_similarity)`. `search` also takes `filters`. Writing chunks is 2.4's job.
+- **Filters** (`Filters`): lists of tickers, forms, fiscal years, fiscal periods, sections and accessions. Each list keeps chunks that match any of its values, and the lists combine with AND.
+  - They are lists because a Q4 question needs two filings: `fiscal_years=[2025], fiscal_periods=["FY", "Q3"]`.
+  - A single string is refused, so `tickers="AAPL"` can't be read as five one-letter tickers.
+  - A section filter leaves out chunks that have no section yet; sections are filled from 4.1.
+- **Scope vs filters:** `scope` is fixed for the store's lifetime and limits everything it reports. `Filters.snapshot(snapshot)` scopes to the pinned filings, which keeps filings added by 2.7 out of the evaluation. `filters` narrows a single search further; 4.3 fills it from the question.
+- **Ranking is by inner product (`<#>`), not cosine distance (`<=>`):** it is the metric FAISS's `IndexFlatIP` uses, and the vectors are unit length, so it equals cosine without the division. Ties are broken by row id, which is ingest order: the order FAISS holds the chunks in.
+- **Keyword search:** `KeywordIndex` is BM25 over a fixed set of chunks, keyed by database id.
+  - The blend is copied line for line from the FAISS store: the same pool sizes, the same normalisation, and the same rescue for strong keyword matches.
+  - Without a keyword index, search ranks by meaning alone.
+  - A chunk added after the keyword index was built raises an error, rather than quietly scoring 0.
+  - 2.3 loads the index from Postgres at startup and measures its memory.
+- **Migration 002** adds `chunks.words`, counted at ingest as `len(text.split())`, so `total_words` is a SUM. A Postgres regex splits non-breaking spaces differently, and filings are full of them. 001 was not edited, because it was already applied.
+- **Shared test fixtures** live in `server/tests/conftest.py`: one admin connection per session, plus a fresh or migrated throwaway schema per test module. The 2.1 tests use them too.
+- **Done when met:** 19 tests in `tests/test_db_store.py`.
+  - 240 synthetic chunks across 4 filings go into a throwaway schema on the `test` branch.
+  - The FAISS store and `PgVectorStore` return the same chunk ids in the same order, with equal `Chunk`s and scores within 1e-5. This holds in every branch: meaning only, hybrid over every chunk, hybrid over a pool, the similarity floor with keyword rescue, and a store scoped to 3 of the 4 filings.
+  - The filters are checked separately: the Q4 pair, form, section, and no match.
+  - The CLI applied 002 to the `test` branch, and `pytest` ticked 2.2.
+
 ### 1.6 — How the Bedrock judge is wired (2026-11-27)
 - **Route:** Bedrock's OpenAI-compatible endpoint, `bedrock-mantle.us-east-1.api.aws/v1`, with a Bedrock API key (`AWS_BEARER_TOKEN_BEDROCK` in `.env`). The existing RAGAS `llm_factory(provider="openai")` path works unchanged, with no new packages.
   - The model cards for Qwen, Kimi and GLM list Chat Completions on bedrock-mantle. bedrock-runtime's OpenAI route is mainly for OpenAI's own models.

@@ -9,8 +9,6 @@ Tests never read DATABASE_URL: that is the live index.
 """
 
 import shutil
-from contextlib import contextmanager
-import uuid
 
 import numpy as np
 import psycopg
@@ -24,34 +22,9 @@ ACCESSION = "0000320193-25-000079"
 SHA = "a" * 64
 
 
-@pytest.fixture(scope="module")
-def admin():
-    """One connection to the test branch for creating and dropping schemas.
-    Shared, because each new connection to Neon costs a second or two."""
-    try:
-        connection.url(connection.TEST)
-    except connection.DatabaseNotConfigured as error:
-        pytest.skip(str(error))
-    with connection.connect(connection.TEST, register_vector=False) as conn:
-        conn.autocommit = True
-        yield conn
-
-
-@contextmanager
-def throwaway_schema(admin):
-    """A connection whose search path starts in a brand-new, empty schema."""
-    name = f"t21_{uuid.uuid4().hex[:10]}"
-    admin.execute(f'CREATE SCHEMA "{name}"')
-    try:
-        with connection.connect(connection.TEST, search_path=name, register_vector=False) as conn:
-            yield conn
-    finally:
-        admin.execute(f'DROP SCHEMA "{name}" CASCADE')
-
-
 @pytest.fixture
-def fresh(admin):
-    with throwaway_schema(admin) as conn:
+def fresh(neon_schema):
+    with neon_schema("t21") as conn:
         yield conn
 
 
@@ -74,8 +47,8 @@ def add_filing(conn, accession=ACCESSION, form="10-K", year=2025, period="FY"):
 def add_chunk(conn, chunk_id, vector, accession=ACCESSION, year=2025, period="FY", form="10-K"):
     conn.execute(
         "INSERT INTO chunks (chunk_id, accession, ticker, cik, form, fiscal_year, fiscal_period,"
-        " start_char, end_char, start_word, end_word, text, embedding)"
-        " VALUES (%s, %s, 'AAPL', '0000320193', %s, %s, %s, 0, 10, 0, 2, 'some text', %s)",
+        " start_char, end_char, start_word, end_word, words, text, embedding)"
+        " VALUES (%s, %s, 'AAPL', '0000320193', %s, %s, %s, 0, 10, 0, 2, 2, 'some text', %s)",
         (chunk_id, accession, form, year, period, vector),
     )
 
@@ -116,13 +89,13 @@ def test_tests_can_never_reach_the_live_database(monkeypatch):
 
 def test_migrations_apply_to_a_fresh_branch(fresh):
     assert tables_in(fresh) == set()
-    assert migrate.migrate(fresh) == ["001_schema"]
+    assert migrate.migrate(fresh) == ["001_schema", "002_chunk_words"]
     assert tables_in(fresh) == {"schema_migrations", "filings", "chunks", "tables", "eval_runs"}
     dims = fresh.execute(
         "SELECT atttypmod FROM pg_attribute WHERE attrelid = 'chunks'::regclass AND attname = 'embedding'"
     ).fetchone()[0]
     assert dims == 384
-    assert migrate.status(fresh) == ["applied  001_schema"]
+    assert migrate.status(fresh) == ["applied  001_schema", "applied  002_chunk_words"]
 
 
 def test_a_second_run_applies_nothing(fresh):
@@ -151,21 +124,10 @@ def test_a_failing_migration_leaves_nothing_behind(fresh, tmp_path):
 
 # --- What the schema itself allows -------------------------------------------
 
-@pytest.fixture(scope="module")
-def migrated(admin):
-    """One migrated schema shared by the tests below; each starts it empty."""
-    from pgvector.psycopg import register_vector
-
-    with throwaway_schema(admin) as conn:
-        migrate.migrate(conn)          # leaves the connection in autocommit
-        register_vector(conn)
-        yield conn
-
-
 @pytest.fixture
-def schema(migrated):
-    migrated.execute("TRUNCATE filings, tables, eval_runs CASCADE")
-    return migrated
+def schema(neon_migrated):
+    neon_migrated.execute("TRUNCATE filings, tables, eval_runs CASCADE")
+    return neon_migrated
 
 
 def test_form_is_free_text_but_known_forms_carry_their_period(schema):
