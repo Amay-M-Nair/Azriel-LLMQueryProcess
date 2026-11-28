@@ -32,7 +32,7 @@ snapshot. Each upgrade is measured against a baseline before it counts.
 |---|---|---|
 | 0 Foundations | 7/7 | complete |
 | 1 Data and baseline | 9/9 | complete |
-| 2 Database and API | 0/7 | 2.1 Neon schema |
+| 2 Database and API | 1/7 | 2.2 pgvector store |
 | 3 Structured outputs | 0/3 | 3.1 Schemas |
 | 4 Parsing and hybrid retrieval | 0/6 | 4.1 Layout-aware 10-K and 10-Q parsing |
 | 5 Reranking, expansion, refusal | 0/5 | 5.1 Cross-encoder reranker |
@@ -191,7 +191,7 @@ Temperature starts at OpenAI's recommended 1.0 for gpt-oss. 1.0 vs 0.3 is run as
 ## Phase 2 — Database and API
 *Goal: the pipeline served by FastAPI from Neon, with numbers identical to the FAISS baseline.*
 
-- [ ] **2.1 Neon schema**
+- [x] **2.1 Neon schema**
   - Tables:
     - `filings` (accession, cik, form, fiscal_year, fiscal_period, period end, filed date).
     - `chunks` (`vector(384)` + company, cik, form, fiscal_year, fiscal_period, section, kind, span).

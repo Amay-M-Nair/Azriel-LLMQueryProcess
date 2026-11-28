@@ -10,7 +10,7 @@
 - Anything that differs from ROADMAP.md is listed under **Departures**, with who decided it and when.
 - Proposals stay marked as proposals until agreed.
 
-Last checked against ROADMAP.md: 2026-11-27.
+Last checked against ROADMAP.md: 2026-11-28.
 
 ---
 
@@ -34,6 +34,45 @@ Last checked against ROADMAP.md: 2026-11-27.
 ---
 
 ## Decisions within the roadmap
+
+### Phase 2 — Versions checked (2026-11-28)
+Logged here, not in ROADMAP.md's *Versions checked* table, since ROADMAP.md is not edited.
+
+| Library / service | Version | Note |
+|---|---|---|
+| psycopg[binary] | 3.3.9 | Newest. The binary extra bundles libpq, so no Postgres install is needed here or on Render. |
+| pgvector (Python) | 0.5.1 | Newest. Reads a `vector` column back as a `pgvector.Vector`, not a numpy array: call `.to_numpy()`. |
+| Neon Postgres | 18.7 | What the free plan gave. |
+| pgvector extension | 0.8.7 | Installed by migration 001 (`CREATE EXTENSION vector`). |
+| psycopg-pool | not added | One connection is enough for now; revisit at 2.5 if the API needs a pool. |
+
+`pip check` is clean.
+
+### 2.1 — Neon setup (2026-11-28, owner)
+- **Free plan** (Neon's FAQ, Nov 2026): 1 GB storage per project, 10 branches, 100 CU-hours a month, scale-to-zero after 5 idle minutes. If storage passes 1 GB, writes fail; nothing is billed. The 31k chunks with vectors should take about 120–150 MB.
+- **Project** `grounded-qa` on AWS US East (Ohio), where Render also has a region (9.4).
+- **Two branches:** `production` is Neon's default name; ROADMAP.md names none. It holds the live index (`DATABASE_URL`). `test` is for tests only (`TEST_DATABASE_URL`, a new variable).
+  - `db.connection` refuses `TEST_DATABASE_URL` if it equals `DATABASE_URL`, so no test can reach the live data.
+  - Both variables are redacted in logs.
+- **Direct connections, no pooler.** Migrations need a direct connection, and nothing needs a pooler yet. `.env.example` says so now; it used to say "pooled".
+- **Latency from this machine:** about 0.28 s per round trip and 1.7 s per new connection. For 2.4 this means ingest must write in batches (COPY or pipelined `executemany`). Row-by-row, 31k chunks would take about 2.5 hours in round trips alone. The 2.1 tests share one connection and one migrated schema for the same reason, which cut them from 105 s to 47 s.
+
+### 2.1 — The schema (2026-11-28)
+- **Migration runner: our own** (`server/db/migrate.py`), not Alembic, so no new package.
+  - Files are named `NNN_name.sql` and applied in order, each in its own transaction. A failure keeps nothing.
+  - `schema_migrations` stores a SHA-256 of each applied file. A file edited after it was applied is refused; changes go in a new migration.
+  - An advisory lock keeps two runners apart.
+  - CLI: `python -m db.migrate [--test] [--status]`, run from `server/`.
+- **Tables** (`db/migrations/001_schema.sql`): `filings`, `chunks`, `tables`, `eval_runs`.
+  - The roadmap's "company" on `chunks` is stored as `ticker` (plus `cik`), which is what the filters use. The company name sits on `filings`.
+  - **The copies on `chunks` cannot drift from their filing:** a second foreign key on (accession, ticker, cik, form, fiscal_year, fiscal_period) enforces it.
+  - `form` is free text. `fiscal_year` and `fiscal_period` may be null for a future form with no fiscal period (8-K). Checks require them for 10-K and 10-Q, `FY` for a 10-K, and Q1–Q3 for a 10-Q.
+  - **The span** is `start_char` / `end_char`. `page`, `start_word` and `end_word` are kept too, so a `Chunk` read back from Postgres equals the one FAISS holds (parity, 2.6).
+  - **No vector index:** an exact scan, as 2.2 asks. `1 - (embedding <=> q)` matches FAISS's inner product to 1e-6, and float32 vectors round-trip exactly (tested).
+  - The commit column is `eval_runs.git_commit`, because `commit` is an SQL keyword.
+- **Live index vs the snapshot:** both live in the same tables. The evaluation will filter to the accessions in `evaluation/snapshot.json` (2.2 / 2.6), so filings added by 2.7 never move a score.
+- **Done when met:** 14 tests in `tests/test_db_schema.py` apply the migrations to a new empty schema on the `test` branch, then check constraints, cascades and cosine ranking. The CLI applied 001 to the `test` branch itself; a second run applied nothing. `pytest` ticked 2.1.
+- **Not done yet:** the `production` branch is not migrated. That happens when 2.4 first ingests, or earlier with `python -m db.migrate`.
 
 ### 1.6 — How the Bedrock judge is wired (2026-11-27)
 - **Route:** Bedrock's OpenAI-compatible endpoint, `bedrock-mantle.us-east-1.api.aws/v1`, with a Bedrock API key (`AWS_BEARER_TOKEN_BEDROCK` in `.env`). The existing RAGAS `llm_factory(provider="openai")` path works unchanged, with no new packages.

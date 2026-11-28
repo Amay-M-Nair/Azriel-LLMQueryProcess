@@ -28,7 +28,8 @@ DATE_FORMAT = "%H:%M:%S"
 # Variables whose values must never be printed, wherever they turn up.
 # SEC_USER_AGENT is not a key, but it carries a contact email, and logs get
 # pasted into issues.
-SECRET_VARIABLES = ("GROQ_API_KEY", "AWS_BEARER_TOKEN_BEDROCK", "DATABASE_URL", "SEC_USER_AGENT")
+SECRET_VARIABLES = ("GROQ_API_KEY", "AWS_BEARER_TOKEN_BEDROCK", "DATABASE_URL", "TEST_DATABASE_URL",
+                    "SEC_USER_AGENT")
 
 # A key in a URL, which is how clients pass them and therefore how they end up
 # inside the exceptions those clients raise.

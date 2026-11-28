@@ -66,6 +66,12 @@ ragas==0.4.4
 instructor==1.17.0
 openai==3.3.0
 
+# --- Database (Phase 2) ----------------------------------------------------
+# Neon Postgres + pgvector (server/db/). The binary extra ships libpq, so no
+# Postgres install is needed on Windows or on Render.
+psycopg[binary]==3.3.9
+pgvector==0.5.1           # numpy <-> vector(384) adapters for psycopg
+
 # --- Service (Phase 2) -----------------------------------------------------
 fastapi==0.165.0
 uvicorn==0.54.0
